@@ -11,10 +11,12 @@ muscale = 50; % multiunit scale
 config{1}.name                      = { 'Hspike'};
 config{1}.prefix                    = 'P1-';
 config{1}.muse.startend             = { 'Hspike','Hspike'};   % start and end Muse marker
+config{1}.patientdir                = '/network/lustre/iss01/epimicro/patients/raw/pat_02711_1193';
 config{1}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/hspike';         % where to write data
 config{1}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/hspike';       % where to print images
 config{1}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_02711_1193/eeg/';
 config{1}.directory_searchstring    = '02711_2019-04-1*';
+config{1}.micromedchannel           = 'F3p6'; % for alignement
 
 config{1}.labels.micro              = {'mHaT2_1'};
 config{1}.labels.macro              = {'_HaT2_1'};

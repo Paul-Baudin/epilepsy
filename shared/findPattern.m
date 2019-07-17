@@ -172,6 +172,9 @@ else
         end
             
         
+        save(fullfile(cfg.datasavedir,[cfg.prefix,'_MuseStruct_macro_aligned.mat']),'MuseStruct_macro');
+        
+        % load  and segmend data according to realiged timings
         [dat_micro, dat_macro] = readLFP(cfg, MuseStruct_micro, MuseStruct_macro, true, false);
         
         
@@ -201,65 +204,17 @@ else
         
         for N = 2 : 6
             
-            %% kmeans
-            
-            %         [indx,centroids]=kmeans(shifted_clean,N,'MaxIter',2000,'Replicates',100,'dist','sqeuclidean');
-            [indx,centroids]=kmeans(z_input,N,'MaxIter',2000,'Replicates',100,'dist','sqeuclidean');
-            
-            clear cluster cluster_mean
-            for i = 1 : N
-                cluster{i}          = z_input(indx==i,:);
-                cluster_mean(i,:)   = mean(cluster{i});
-            end
-            ymin = min(min(cluster_mean))*1.3;
-            ymax = max(max(cluster_mean))*1.3;
-            
-            
-            fig = figure; hold;
-            fig.Renderer = 'Painters';
-            
-            for i = 1 : N
-                
-                [z_input_realigned,~] = align_data(z_input(indx==i,:),5);
-                
-                subplot(3,N,i);
-                imagesc(z_input(indx==i,:));
-                set(gca,'xtick',[]);
-                
-                subplot(3,N,i+N*1);
-                imagesc(z_input_realigned);
-                set(gca,'xtick',[]);
-                
-                subplot(3,N,i+N*2); hold;
-                plot(dat{imarker}.time{1},nanmean(z_input(indx==i,:)));
-                %             xlim([dat{imarker}.time{1}(1),dat{imarker}.time{1}(end)]);
-                %             ylim([ymin*1.1,ymax*1.1]);
-                axis tight
-                plot(dat{imarker}.time{1},nanmean(z_input_realigned));
-                
-            end
-            
-            set(fig,'PaperOrientation','landscape');
-            set(fig,'PaperUnits','normalized');
-            set(fig,'PaperPosition', [0 0 1 1]);
-            print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans',cfg.name{imarker},'_N',num2str(N),'.pdf']),'-r600');
-            print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans',cfg.name{imarker},'_N',num2str(N),'.png']),'-r600');
-            close all
-            
-            % plot siluette
-            fig = figure;
-            [silh,h] = silhouette(z_input,indx,'sqeuclidean');
-            set(fig,'PaperOrientation','landscape');
-            set(fig,'PaperUnits','normalized');
-            set(fig,'PaperPosition', [0 0 1 1]);
-            print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans_silhouette',cfg.name{imarker},'_N',num2str(N),'.pdf']),'-r600');
-            print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans_silhouette',cfg.name{imarker},'_N',num2str(N),'.png']),'-r600');
-            close all
-            
-            
-            %% Hierarchical Clustering with
+            %% Euclidian distance
             eucD = pdist(z_input,'seuclidean');
             %             eucD = pdist(shifted_clean_z,@naneucdist); % method to allow nans
+%             
+%             [Y,stress,disparities] = mdscale(eucD,3);
+%             figure; 
+%             scatter3(Y(:,1),Y(:,2),Y(:,3));
+%             
+            
+            %% Hierarchical Clustering
+            
             clustTreeEuc = linkage(eucD,'average');
             
             % plot tree
@@ -333,6 +288,67 @@ else
             print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'hierach_clusters_',cfg.name{imarker},'_N',num2str(N),'.pdf']),'-r600');
             print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'hierach_clusters_',cfg.name{imarker},'_N',num2str(N),'.png']),'-r600');
             close all
+            
+            
+            
+            
+            
+            %% kmeans
+            
+            %         [indx,centroids]=kmeans(shifted_clean,N,'MaxIter',2000,'Replicates',100,'dist','sqeuclidean');
+            [indx,centroids]=kmeans(z_input,N,'MaxIter',2000,'Replicates',100,'dist','sqeuclidean');
+            
+            clear cluster cluster_mean
+            for i = 1 : N
+                cluster{i}          = z_input(indx==i,:);
+                cluster_mean(i,:)   = mean(cluster{i});
+            end
+            ymin = min(min(cluster_mean))*1.3;
+            ymax = max(max(cluster_mean))*1.3;
+            
+            
+            fig = figure; hold;
+            fig.Renderer = 'Painters';
+            
+            for i = 1 : N
+                
+                [z_input_realigned,~] = align_data(z_input(indx==i,:),5);
+                
+                subplot(3,N,i);
+                imagesc(z_input(indx==i,:));
+                set(gca,'xtick',[]);
+                
+                subplot(3,N,i+N*1);
+                imagesc(z_input_realigned);
+                set(gca,'xtick',[]);
+                
+                subplot(3,N,i+N*2); hold;
+                plot(dat{imarker}.time{1},nanmean(z_input(indx==i,:)));
+                %             xlim([dat{imarker}.time{1}(1),dat{imarker}.time{1}(end)]);
+                %             ylim([ymin*1.1,ymax*1.1]);
+                axis tight
+                plot(dat{imarker}.time{1},nanmean(z_input_realigned));
+                
+            end
+            
+            set(fig,'PaperOrientation','landscape');
+            set(fig,'PaperUnits','normalized');
+            set(fig,'PaperPosition', [0 0 1 1]);
+            print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans',cfg.name{imarker},'_N',num2str(N),'.pdf']),'-r600');
+            print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans',cfg.name{imarker},'_N',num2str(N),'.png']),'-r600');
+            close all
+            
+            % plot siluette
+            fig = figure;
+            [silh,h] = silhouette(z_input,indx,'sqeuclidean');
+            set(fig,'PaperOrientation','landscape');
+            set(fig,'PaperUnits','normalized');
+            set(fig,'PaperPosition', [0 0 1 1]);
+            print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans_silhouette',cfg.name{imarker},'_N',num2str(N),'.pdf']),'-r600');
+            print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'raster_trials_kmeans_silhouette',cfg.name{imarker},'_N',num2str(N),'.png']),'-r600');
+            close all
+            
+            
             
             
             

@@ -5,10 +5,9 @@
 % requires bandpassFilter.m from Mario
 % requires releaseDec2015 from Neuralynx website
 
-addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/
-addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/hspike/
-addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/shared/
-
+addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/
+addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/hspike/
+addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/shared/
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
 ft_defaults
 
@@ -30,12 +29,12 @@ for ipatient = 1
     
     % read muse markers
     [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, force);
-    
-    % align Muse markers according to peaks and detect whether they contain artefacts
-    %     [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers_macro(config{ipatient},MuseStruct_micro, MuseStruct_macro, force);
-    
+       
     % read LFP data
-    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, true);
+    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
+    
+    % export hypnogram to muse
+    export_hypnogram(config{ipatient});
     
     % cluster pattern
     findPattern(config{ipatient}, dat_micro, dat_macro, force)
