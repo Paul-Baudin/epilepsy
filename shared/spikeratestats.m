@@ -1,6 +1,29 @@
 
-
 function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force)
+% 
+% Creates spike stats and figures based on raw and epoched spike data 
+%
+% Necessary input:
+% 
+% cfg.datasavedir       = data directory of results
+% cfg.circus.outputdir  = directory delow datasavedir for spyking-circus
+% cfg.circus.suffix     = from spyking-circus params files 
+% cfg.circus.channel    = micro electrode names
+%
+% The following can be retreaved with readSpykingCircus.m:
+%
+% SpikeRaw = raw spike data in FieldTrip raw spike data structure
+% SpikeTrials = spike data epoched in FieldTrip trial data structure
+%
+% force                 = whether to redo analyses or read previous save
+%                         (true/false)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 fname = fullfile(cfg.datasavedir,[cfg.prefix,'all_data_spikedata_stats.mat']);
 if exist(fname,'file') && force == false
@@ -77,74 +100,74 @@ else
     set(fig,'PaperPosition', [0 0 1 1]);
     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'ISI_own.pdf']),'-r600');
     
-%     % cross-correlation between template (over 1 second trials)
-%     cfgtemp             = [];
-%     cfgtemp.binsize     = 0.0005;
-%     cfgtemp.maxlag      = 0.015;
-%     cfgtemp.debias      = 'yes';
-%     cfgtemp.method      = 'xcorr';
-%     stats.xcorr         = ft_spike_xcorr(cfgtemp,spiketrials_1s);
-%     
-%     % plot xcorr
-%     fig = figure;
-%     set(fig, 'units','normalized','position', [0 0 1 0.5]);
-%     i = 1;
-%     for ix = 1 : size(stats.xcorr.xcorr,1)
-%         for iy = 1 : size(stats.xcorr.xcorr,2)
-%             
-%             if ix > iy
-%                 c = [0 0 0];
-%             end
-%             
-%             if ix < iy
-%                 c = [0 0 0];
-%             end
-%             
-%             if ix == iy
-%                 c = [0 0 0.8];
-%             end
-%             
-%             x = stats.xcorr.time;
-%             y = squeeze(stats.xcorr.xcorr(ix,iy,:));
-%             if ~any(isnan(y))
-%                 
-%                 h = subplot(size(stats.xcorr.xcorr,1),size(stats.xcorr.xcorr,2),i);
-%                 hold;
-%                 
-%                 Lx = 1:length(x)/2;
-%                 Rx = length(x)/2 : length(x);
-%                 
-%                 xintL = linspace(x(Lx(1)),x(Lx(end)),100)';
-%                 yintL = spline(x(Lx),y(Lx),xintL);
-%                 yintL = smooth(yintL,10);
-%                 
-%                 xintR = linspace(x(Rx(1)),x(Rx(end)),100)';
-%                 yintR = spline(x(Rx),y(Rx),xintR);
-%                 yintR = smooth(yintR,10);
-%                 
-%                 
-%                 bar(x,y);
-%                 plot(xintL,yintL,'r','linewidth',1);
-%                 plot(xintR,yintR,'r','linewidth',1);
-%                 axis tight
-%                 ax = axis;
-%                 ylim([0,ax(4)]);
-%                 set(h,'yticklabel',{[]});
-%                 t = sprintf('%dx%d',ix,iy);
-%                 title(t);
-%                 pbaspect([1 1 1])
-%                 grid on
-%             end
-%             i = i + 1;
-%         end
-%     end
-%     
-%     % print to file
-%     fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
-%     set(fig,'PaperOrientation','landscape');
-%     set(fig,'PaperUnits','normalized');
-%     set(fig,'PaperPosition', [0 0 1 1]);
-%     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'xcorr_1s_windows.pdf']),'-r600');
+    % cross-correlation between template (over 1 second trials)
+    cfgtemp             = [];
+    cfgtemp.binsize     = 0.0005;
+    cfgtemp.maxlag      = 0.015;
+    cfgtemp.debias      = 'yes';
+    cfgtemp.method      = 'xcorr';
+    stats.xcorr         = ft_spike_xcorr(cfgtemp,spiketrials_1s);
+    
+    % plot xcorr
+    fig = figure;
+    set(fig, 'units','normalized','position', [0 0 1 0.5]);
+    i = 1;
+    for ix = 1 : size(stats.xcorr.xcorr,1)
+        for iy = 1 : size(stats.xcorr.xcorr,2)
+            
+            if ix > iy
+                c = [0 0 0];
+            end
+            
+            if ix < iy
+                c = [0 0 0];
+            end
+            
+            if ix == iy
+                c = [0 0 0.8];
+            end
+            
+            x = stats.xcorr.time;
+            y = squeeze(stats.xcorr.xcorr(ix,iy,:));
+            if ~any(isnan(y))
+                
+                h = subplot(size(stats.xcorr.xcorr,1),size(stats.xcorr.xcorr,2),i);
+                hold;
+                
+                Lx = 1:length(x)/2;
+                Rx = length(x)/2 : length(x);
+                
+                xintL = linspace(x(Lx(1)),x(Lx(end)),100)';
+                yintL = spline(x(Lx),y(Lx),xintL);
+                yintL = smooth(yintL,10);
+                
+                xintR = linspace(x(Rx(1)),x(Rx(end)),100)';
+                yintR = spline(x(Rx),y(Rx),xintR);
+                yintR = smooth(yintR,10);
+                
+                
+                bar(x,y);
+                plot(xintL,yintL,'r','linewidth',1);
+                plot(xintR,yintR,'r','linewidth',1);
+                axis tight
+                ax = axis;
+                ylim([0,ax(4)]);
+                set(h,'yticklabel',{[]});
+                t = sprintf('%dx%d',ix,iy);
+                title(t);
+                pbaspect([1 1 1])
+                grid on
+            end
+            i = i + 1;
+        end
+    end
+    
+    % print to file
+    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
+    set(fig,'PaperOrientation','landscape');
+    set(fig,'PaperUnits','normalized');
+    set(fig,'PaperPosition', [0 0 1 1]);
+    print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'xcorr_1s_windows.pdf']),'-r600');
 
     % stats per pattern
     for ilabel = 1 : size(SpikeTrials,2)

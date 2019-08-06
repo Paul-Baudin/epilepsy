@@ -214,8 +214,8 @@ writetable(tbl,filename)
 %     end
 %     temp(temp == 0) = nan;
 %     t = nanmean(temp,2)';
-
-end
+% 
+% end
 
 %% average spike LFP averages
 
@@ -290,10 +290,10 @@ c = [];
 labels = {};
 for ipatient =  1 : 3
     for imarker = 1 : size(stat_TFR_micro{ipatient},2)
-        xi = xi + 1
+        xi = xi + 1;
         
         for icontact = 1 : length(stat_TFR_micro{ipatient}{imarker}.corrs.avg)
-            xpos = (xi-1) * 3
+            xpos = (xi-1) * 3;;
             ypos = (icontact-1) * 3
             c = stat_TFR_micro{ipatient}{mloc(ipatient,imarker)}.corrs.avg(icontact);
             if c >= 0
@@ -370,6 +370,7 @@ for ipatient = 1 : 3
 end
 
 %% compare baseline firingrates and create table (SEPARATE)
+
 clear stat_bl SpikeRateStats SpikeRateStats_bar SpikeRaw SpikeTrials tbl unit w_template w_data pt_template pt_data
 tbl = table;
 iunit = 1;
@@ -626,6 +627,7 @@ writetable(tbl,'/network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshEpilep
 
 
 %% Make figure like Bartho 2000
+
 fig = figure;
 
 subplot(1,2,1); hold;
@@ -727,6 +729,7 @@ print(fig, '-dpdf', '/network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshE
 
 
 %% plot example of individual waveforms of single unit
+
 % 2-8 (interneuron) and 1-4 (pyramidal)
 
 ipatient = 2;
@@ -790,6 +793,7 @@ print(fig, '-dpdf', ['/network/lustre/iss01/charpier/stephen.whitmarsh/Whitmarsh
 
 
 %% find max FFT
+
 force = false;
 for ipatient = 1 : 3
     config = setparams([]);
@@ -807,7 +811,6 @@ end
 
 
 %% PLOT ALL FIRINGRATES
-
 
 % load data
 

@@ -8,10 +8,10 @@ function [MuseStruct_micro, MuseStruct_macro]  = readMuseMarkers(cfg,force)
 % used to create an overview of events (plotmarkers.m), segment data with
 % FieldTrip (e.g. plotpeaks.m) and create artefact files for Spyking-Circus
 % (writeSpykingCircusDeadFile.m). The resultant MuseStruct can be edited
-% and written into a new markerfile for Muse ( writeMuseMarkers.m)
+% and written into a new markerfile for Muse with writeMuseMarkers.m
 %
-% Code by Stephen Whitmarsh (stephen.whitmarsh@icm-institute)
-% with code for reading the Muse text adapted from Jean-Didier Lemarechal & Craig Richter
+% Code by Stephen Whitmarsh (stephen.whitmarsh@gmail.com)
+% with help from Jean-Didier Lemarechal & Craig Richter
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -98,11 +98,11 @@ for type = ["micro","macro"]
                     classid         = markfile(strmatch('CLASSID:', markfile, 'exact') + 1);
                     nrEvents        = str2num(char(markfile(strmatch('NUMBER OF SAMPLES:', markfile, 'exact') + 1)));
                     
-                    %             for i = 1:length(nrEvents)
-                    %                 if nrEvents(i) > 0
-                    %                     fprintf('found %d occurances of %s \n', nrEvents(i), name{i});
-                    %                 end
-                    %             end
+                    for i = 1:length(nrEvents)
+                        if nrEvents(i) > 0
+                            fprintf('found %d occurances of %s \n', nrEvents(i), name{i});
+                        end
+                    end
                     
                     % Get the events, time in seconds from onset of file
                     j = strmatch('LIST OF SAMPLES:', markfile, 'exact') + 2;
