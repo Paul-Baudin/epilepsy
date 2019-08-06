@@ -52,23 +52,26 @@ for type = ["micro","macro"]
             hasfiles = 0;
             channr = 1;
             for ichan = 1 : size(cfg.labels.(type),2)
-                d = dir(fullfile(cfg.rawdir,ldir(idir).name,['*',cfg.labels.(type){ichan},'*.ncs']));
-                if ~isempty(d)
-                    
-                    % add some bookkeeping for later
-                    MuseStruct{idir}.directory = fullfile(ldir(idir).folder,ldir(idir).name);
-                    MuseStruct{idir}.filenames{channr} = d.name;
-                    channr = channr + 1;
-                    hasfiles = 1;
-                else
-                    fprintf('*** ERROR: cannot find channel %s data in %s\n',cfg.labels.(type){ichan},fullfile(cfg.rawdir,ldir(idir).name));
+                if ldir(idir).isdir
+                    d = dir2(fullfile(cfg.rawdir,ldir(idir).name,['*',cfg.labels.(type){ichan},'*.ncs']));
+                    if ~isempty(d)
+                        
+                        % add some bookkeeping for later
+                        MuseStruct{idir}.directory = fullfile(ldir(idir).folder,ldir(idir).name);
+                        MuseStruct{idir}.filenames{channr} = d.name;
+                        channr = channr + 1;
+                        hasfiles = 1;
+                    else
+                        fprintf('*** WARNING: cannot find channel %s data in %s\n',cfg.labels.(type){ichan},fullfile(cfg.rawdir,ldir(idir).name));
+                    end
                 end
             end
             
             if hasfiles
                 
                 fprintf('Extracting artefact timings based on header of %s \n',MuseStruct{idir}.filenames{1});
-                name_mrk = fullfile(cfg.rawdir,ldir(idir).name,'Events.mrk');
+                temp = dir(fullfile(cfg.rawdir,ldir(idir).name,'*.mrk'));
+                name_mrk = fullfile(cfg.rawdir,ldir(idir).name,temp.name);
                 
                 if ~exist(name_mrk)
                     error('%s not found', name_mrk);
@@ -119,16 +122,29 @@ for type = ["micro","macro"]
                     
                     f = fopen([datafile(1:end-3) 'txt']);
                     clear timestring
+                    ftype = 'none';
                     while 1
                         tline = fgetl(f);
                         if ~ischar(tline), break, end
-                        searchstring = '## Time Opened (m/d/y)';
+                        searchstring1 = '## Time Opened (m/d/y)';
+                        searchstring2 = '-TimeCreated';
                         try
-                            if strcmp(tline(1:length(searchstring)),searchstring)
-                                timestring = tline;
-                                disp('Great, found timestamp in header file');
-                                break
+                            if length(tline) >= max(length(searchstring1))
+                                if strcmp(tline(1:length(searchstring1)),searchstring1)
+                                    timestring = tline;
+                                    ftype = 1;
+                                    disp('Great, found timestamp in header file - Type 1');
+                                    break
+                                end
                             end
+                            if length(tline) >= max(length(searchstring2))
+                                if strcmp(tline(1:length(searchstring2)),searchstring2)
+                                    timestring = tline;
+                                    ftype = 2;
+                                    disp('Great, found timestamp in header file - Type 2');
+                                    break
+                                end
+                            end                            
                         catch
                             disp('Warning: something weird happened reading the txt time');
                         end
@@ -136,13 +152,23 @@ for type = ["micro","macro"]
                     fclose(f);
                     
                     % add real time of onset of file
-                    timestring                  = strsplit(timestring);
-                    headerdate                  = [cell2mat(timestring(5)) ' ' cell2mat(timestring(7))];
-                    MuseStruct{idir}.starttime  = datetime(headerdate,'Format','MM/dd/yy HH:mm:ss.SSS');
+                    timestring = strsplit(timestring);
+                    switch ftype
+                        case 1
+                            headerdate = [cell2mat(timestring(5)) ' ' cell2mat(timestring(7))];
+                            MuseStruct{idir}.starttime  = datetime(headerdate,'Format','MM/dd/yy HH:mm:ss.SSS');
+                            
+                        case 2
+                            headerdate = [cell2mat(timestring(2)) ' ' cell2mat(timestring(3))];
+                            MuseStruct{idir}.starttime  = datetime(headerdate,'Format','yy/MM/dd HH:mm:ss.SSS');    
+                    end        
                     
                     % convert time to samples - FROM ONSET OF FILE
                     for imarker = 1 : nmarkers
                         name{imarker} = strrep(name{imarker},'-','_'); % cant make fieldnames with minusses
+                        
+                        try
+                        
                         MuseStruct{idir}.markers.(name{imarker}).events         = [];
                         MuseStruct{idir}.markers.(name{imarker}).comment        = comment{imarker};
                         MuseStruct{idir}.markers.(name{imarker}).color          = color{imarker};
@@ -168,6 +194,8 @@ for type = ["micro","macro"]
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).duration    = 0;
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).offset      = MuseStruct{idir}.markers.(name{imarker}).offset(ievent);
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).time        = marks{imarker}(ievent,2);
+                        end
+                        catch
                         end
                     end
                 else

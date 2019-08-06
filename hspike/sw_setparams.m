@@ -15,11 +15,15 @@ config{1}.patientdir                = '/network/lustre/iss01/epimicro/patients/r
 config{1}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/hspike';         % where to write data
 config{1}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/hspike';       % where to print images
 config{1}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_02711_1193/eeg/';
-config{1}.directory_searchstring    = '02711_2019-04-1*';
-config{1}.micromedchannel           = 'F3p6'; % for alignement
-
+config{1}.directory_searchstring    = '02711_2019-04-*';
 config{1}.labels.micro              = {'mHaT2_1'};
 config{1}.labels.macro              = {'_HaT2_1'};
+
+config{1}.hyp.imagesavedir          = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/hypnogram'; 
+config{1}.hyp.backupdir             = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/markerbackup';
+config{1}.hyp.micromedchannel       = 'F3p6';
+config{1}.hyp.contains              = {'NO_SCORE','AWAKE','PHASE_1','PHASE_2','PHASE_3','REM'}; % in order of height in plot
+config{1}.hyp.notcontains           = {"ADStartLoss","ADEndLoss","TTL","StartRecord","StopRecord","NLXEvent","BAD"};
 
 config{1}.align.channel             = {'_HaT2_1'};                                                                                    % pattern to identify channel on which to based peak detection                                                                        % peak threshold: fraction (0:inf) of mean peak amplitude in baseline period
 config{1}.align.flip                = {'yes'};
@@ -32,6 +36,10 @@ config{1}.align.thresh              = [0];
 config{1}.align.toiplot{1}          = [-0.5,  1];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
 config{1}.align.toiactive{1}        = [-0.06, 0.06];                                            % active period in which to search for peaks [ -0.1,  30;  0, 30;  -0.1, 0.1;0,  0.1];
 config{1}.align.toibaseline{1}      = [-0.2, -0.1];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
+
+config{1}.pattern.startmarker       = 'StartHypnogram';
+config{1}.pattern.endmarker         = 'EndHypnogram';
+
 
 config{1}.LFP.hpfilter              = 'no';
 config{1}.LFP.hpfreq                = 1;

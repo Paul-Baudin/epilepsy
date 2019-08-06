@@ -1,4 +1,4 @@
-function plotSeizureSegmentation(config,MuseStruct)
+function plotPatterns(config,MuseStruct)
 
 % remove empty structs
 MuseStruct = MuseStruct(~cellfun('isempty',MuseStruct));
@@ -83,14 +83,20 @@ while i < height(t)
     i = i + 1;
 end
 
-t(contains(t.markerlabel,"ADStartLoss") | contains(t.markerlabel,"ADEndLoss") | contains(t.markerlabel,"TTL") | contains(t.markerlabel,"StartRecord") | contains(t.markerlabel,"StopRecord") | contains(t.markerlabel,"NLXEvent") | contains(t.markerlabel,"BAD"),:) = [];
+% t(contains(t.markerlabel,config.hyp.notcontains),:) = [];
+t = t(contains(t.markerlabel,config.hyp.contains),:);
 
-startsindx = find(contains(t.markerlabel,'CriseStart'));
-endsindx   = find(contains(t.markerlabel,'CriseEnd'));
+% 
+% startsindx = find(contains(t.markerlabel,'CriseStart'));
+% endsindx   = find(contains(t.markerlabel,'CriseEnd'));
+% 
+% startsindx = find(contains(t.markerlabel,config.pattern.startmarker));
+% endsindx   = find(contains(t.markerlabel,config.pattern.endmarker));
+% fprintf('\n%d Patterns found\n',numel(startsindx));
 
+startsindx  = [1; find(diff(t.endtime) > hours(2))+1];
+endsindx    = [find(diff(t.endtime) > hours(2)); length(endsindx)];
 
-
-fprintf('\n%d Seizures found\n',numel(startsindx));
 
 ii = 1;
 for i = 1 : numel(startsindx)
@@ -101,7 +107,7 @@ for i = 1 : numel(startsindx)
         ii = ii + 1;
     end
 end
-t(contains(t.markerlabel,"CriseEnd") | contains(t.markerlabel,"CriseStart"),:) = [];
+t(contains(t.markerlabel,config.pattern.startmarker) | contains(t.markerlabel,config.pattern.endmarker),:) = [];
 maxlength = max(Cend - Cstart);
 
 
@@ -113,31 +119,52 @@ h = figure;
 for is = 1 : size(s,2)
     subplot(size(s,2)+1,1,is); hold;
     fill([s{is}.starttime(1), Cstart(is) + maxlength, Cstart(is) + maxlength, s{is}.starttime(1)],[0 0 1 1],[1 1 1],'EdgeColor',[1 1 1]);
+    X = [];
+    Y = [];
     for im = 1 : height(s{is})
         c = colortable.color(strcmp(colortable.label,s{is}.markerlabel(im)),:);
-        fill([s{is}.starttime(im), s{is}.endtime(im), s{is}.endtime(im), s{is}.starttime(im)],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
+        if ~isempty(X)
+            if s{is}.starttime(im) ~= X(end)
+                X = [X, X(end) s{is}.starttime(im)];
+                Y = [Y, 0 0];
+            end
+        end
+        X = [X, s{is}.starttime(im), s{is}.endtime(im)];
+        y = find(contains(config.hyp.contains,t.markerlabel(im)));
+        Y = [Y, y, y];
+    end
+    for i = 1 : length(X)-1
+        if Y(i) ~= 0 && Y(i+1) ~= 0
+            if strcmp(config.hyp.contains(Y(i)),'REM') && strcmp(config.hyp.contains(Y(i+1)),'REM')
+                
+                plot([X(i) X(i+1)],[Y(i) Y(i+1)],'k','LineWidth',3);
+            else
+                plot([X(i) X(i+1)],[Y(i) Y(i+1)],'k');
+            end
+        end
     end
     set(gca,'Layer','top');
+    set(gca,'Ytick', 1 : length(config.hyp.contains),'Yticklabels',strrep(config.hyp.contains,'_',' '),'TickDir','out');
     axis tight;
 end
-
-subplot(size(s,2)+1,1,size(s,2)+1); hold;
-for marker = 1 : numel(colortable.label)
-    c = colortable.color(marker,:);
-    x1 = marker*2;
-    x2 = marker*2+1.5;
-    fill([x1,x2,x2,x1],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
-    text((x1+x2)/2,0.1,colortable.label(marker),'Rotation',90,'Fontsize',10);
-    set(gca,'Layer','top');
-end
-set(gca,'XTick',[]);
-axis tight
+% 
+% subplot(size(s,2)+1,1,size(s,2)+1); hold;
+% for marker = 1 : numel(colortable.label)
+%     c = colortable.color(marker,:);
+%     x1 = marker*2;
+%     x2 = marker*2+1.5;
+%     fill([x1,x2,x2,x1],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
+%     text((x1+x2)/2,0.1,colortable.label(marker),'Rotation',90,'Fontsize',10);
+%     set(gca,'Layer','top');
+% end
+% set(gca,'XTick',[]);
+% axis tight
 
 % print to file
 set(h,'PaperOrientation','landscape');
 set(h,'PaperUnits','normalized');
 set(h,'PaperPosition', [0 0 1 1]);
 set(h,'Renderer','Painters');
-print(h, '-dpdf', fullfile(config.imagesavedir,[config.prefix,'overview_segmentation.pdf']),'-r600');
+print(h, '-dpdf', fullfile(config.imagesavedir,[config.prefix,'overview_patterns.pdf']),'-r600');
 % writetable(t,fullfile(config.imagesavedir,'seg_labels'));
 disp('Done');

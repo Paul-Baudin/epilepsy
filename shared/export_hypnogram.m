@@ -10,20 +10,20 @@ function export_hypnogram(cfg)
 %
 % Necessary fields:
 %
-% cfg.patientdir        = [path to patient data, one above /eeg and /eegmicromed]
-% cfg.micromedchannel   = [micromed channel to use for alignment]
-% cfg.imagesavedir      = [path to directory in which to save plots]
-% cfg.prefix            = [string to prefix output figure, e.g. patient ID]
-% cfg.backupdir         = [directory to backup Muse marker files]
+% cfg.patientdir            = [path to patient data, one above /eeg and /eegmicromed]
+% cfg.hyp.micromedchannel   = [micromed channel to use for alignment]
+% cfg.imagesavedir          = [path to directory in which to save plots]
+% cfg.prefix                = [string to prefix output figure, e.g. patient ID]
+% cfg.hyp.backupdir         = [directory to backup Muse marker files]
 %
 % Example:
 %
-% cfg                   = [];
-% cfg.patientdir        = '/network/lustre/iss01/epimicro/patients/raw/pat_02711_1193';
-% cfg.micromedchannel   = 'F3p6';
-% cfg.imagesavedir      = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/hspike';
-% cfg.prefix            = 'P1-';
-% cfg.backupdir         = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/markerbackup';
+% cfg                       = [];
+% cfg.patientdir            = '/network/lustre/iss01/epimicro/patients/raw/pat_02711_1193';
+% cfg.hyp.micromedchannel   = 'F3p6';
+% cfg.imagesavedir          = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/hspike';
+% cfg.prefix                = 'P1-';
+% cfg.hyp.backupdir         = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/markerbackup';
 % export_hypnogram(cfg);
 %
 % Note:
@@ -38,7 +38,7 @@ function export_hypnogram(cfg)
 
 feature('DefaultCharacterSet', 'UTF8') %# for all Character support, or 'CP1252'
 
-% flist of all hypnogram files
+% list of all hypnogram files in MicroMed directory
 micromed_hypnfilelist                   = dir2(fullfile(cfg.patientdir,'eegmicromed','*.hypn'));
 
 % get some info about the 'real' time of recording the MicroMed data
@@ -97,6 +97,7 @@ end
 % find overlap between micromed and neuralynx files
 for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     hasoverlap{iMicroMed} = [];
+    
     % Search all neuralynx files
     for iNeuraLynx = 1 : size(neuralynx_datafiles,2)
         % look for any marker in the MicroMed marker file that corresponds
@@ -122,7 +123,7 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     [~,name,~]      = fileparts(micromed_hypnfilelist(iMicroMed).name);
     cfgtemp         = [];
     cfgtemp.dataset = fullfile(micromed_hypnfilelist(iMicroMed).folder,[name,'.TRC']);
-    cfgtemp.channel = cfg.micromedchannel;
+    cfgtemp.channel = cfg.hyp.micromedchannel;
     dat_MM          = ft_preprocessing(cfgtemp);
     
     dat_NL_concat   = [];
@@ -191,8 +192,8 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     set(fig,'PaperPosition', [0 0 1 1]);
     
     [~,name,~] = fileparts(micromed_hypnfilelist(iMicroMed).name);
-    print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'alignment_',name,'.pdf']));
-    print(fig, '-dpng', fullfile(cfg.imagesavedir,[cfg.prefix,'alignment_',name,'.png']),'-r600');
+    print(fig, '-dpdf', fullfile(cfg.hyp.imagesavedir,[cfg.prefix,'alignment_',name,'.pdf']));
+    print(fig, '-dpng', fullfile(cfg.hyp.imagesavedir,[cfg.prefix,'alignment_',name,'.png']),'-r600');
     close all
     
     % read hypnogram, remove sample
@@ -281,7 +282,7 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
                 marks{imarker}(:, 1) = marks{imarker}(:, 1) + 1;
             end
         end
-
+        
         % put data back into structure to write later
         clear MuseStruct
         for imarker = 1 : nmarkers
@@ -304,94 +305,111 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
         
         for label = unique(hyp_file.stage)'
             
-            % ignore some labels
-            if ~strcmp(label,'BEGIN') && ~strcmp(label,'END')
+            if strcmp(label,'BEGIN')
                 
-                % for those markers that have a duration
-                if hyp_file.startSec(strcmp(hyp_file.stage, label)) ~= hyp_file.endSec(strcmp(hyp_file.stage, label))
-                    
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum       = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime));  % replace space with underscore                                        
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classgroupid   = '+3';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).comment        = 'Exported from hypnogram';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).editable       = 'Yes';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classid        = '+666'; % will be replaced by writeMuseMarkers.m
-                    
-                    switch label{1}
-                        case 'AWAKE'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'yellow';
-                        case 'PHASE 1'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'green';
-                        case 'PHASE 2'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'blue';
-                        case 'PHASE 3'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'red';
-                        case 'PHASE 4'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'purple';
-                        otherwise
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'black';
-                    end
-                    
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label));     % replace space with underscore
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime));  % replace space with underscore                    
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classgroupid = '+3';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).comment      = 'Exported from hypnogram';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).editable     = 'Yes';
-                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classid      = '+666'; % will be replaced by writeMuseMarkers.m
-                    
-                    switch label{1}
-                        case 'AWAKE'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'yellow';
-                        case 'PHASE 1'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'green';
-                        case 'PHASE 2'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'blue';
-                        case 'PHASE 3'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'red';
-                        case 'PHASE 4'
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'purple';
-                        otherwise
-                            MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'black';
-                    end
-                    
-                else
-                    MuseStruct.markers.(strrep(label{1},' ','_')).synctime      = hyp_file.endSec(strcmp(hyp_file.stage, label));  % replace space with underscore
-                    MuseStruct.markers.(strrep(label{1},' ','_')).trialnum      = zeros(size(MuseStruct.markers.(strrep(label{1},' ','_')).synctime));  % replace space with underscore
-                    MuseStruct.markers.(strrep(label{1},' ','_')).classgroupid  = '+3';
-                    MuseStruct.markers.(strrep(label{1},' ','_')).comment       = 'Exported from hypnogram';
-                    MuseStruct.markers.(strrep(label{1},' ','_')).editable      = 'Yes';
-                    MuseStruct.markers.(strrep(label{1},' ','_')).classid       = '+666'; % will be replaced by writeMuseMarkers.m
-                    switch label{1}
-                        case 'AWAKE'
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'yellow';
-                        case 'PHASE 1'
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'green';
-                        case 'PHASE 2'
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'blue';
-                        case 'PHASE 3'
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'red';
-                        case 'PHASE 4'
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'purple';
-                        otherwise
-                            MuseStruct.markers.(strrep(label{1},' ','_')).color = 'black';
-                    end
+                MuseStruct.markers.StartHypnogram.synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.StartHypnogram.trialnum       = 0;  
+                MuseStruct.markers.StartHypnogram.classgroupid   = '+3';
+                MuseStruct.markers.StartHypnogram.comment        = 'Exported from hypnogram';
+                MuseStruct.markers.StartHypnogram.editable       = 'Yes';
+                MuseStruct.markers.StartHypnogram.classid        = '+666'; % will be replaced by writeMuseMarkers.m
+                MuseStruct.markers.StartHypnogram.color          = 'black';
+            end
+            
+            if strcmp(label,'END')
+                
+                MuseStruct.markers.EndHypnogram.synctime        = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.EndHypnogram.trialnum        = 0;  
+                MuseStruct.markers.EndHypnogram.classgroupid    = '+3';
+                MuseStruct.markers.EndHypnogram.comment         = 'Exported from hypnogram';
+                MuseStruct.markers.EndHypnogram.editable        = 'Yes';
+                MuseStruct.markers.EndHypnogram.classid         = '+666'; % will be replaced by writeMuseMarkers.m
+                MuseStruct.markers.EndHypnogram.color           = 'black';
+            end
+            
+            % for those markers that have a duration
+            if hyp_file.startSec(strcmp(hyp_file.stage, label)) ~= hyp_file.endSec(strcmp(hyp_file.stage, label))
+                
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum       = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime));  % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classgroupid   = '+3';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).comment        = 'Exported from hypnogram';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).editable       = 'Yes';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classid        = '+666'; % will be replaced by writeMuseMarkers.m
+                
+                switch label{1}
+                    case 'AWAKE'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'cyan';
+                    case 'PHASE 1'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'green';
+                    case 'PHASE 2'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'blue';
+                    case 'PHASE 3'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'red';
+                    case 'PHASE 4'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'purple';
+                    otherwise
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'black';
                 end
                 
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime));  % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classgroupid = '+3';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).comment      = 'Exported from hypnogram';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).editable     = 'Yes';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classid      = '+666'; % will be replaced by writeMuseMarkers.m
+                
+                switch label{1}
+                    case 'AWAKE'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'yellow';
+                    case 'PHASE 1'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'green';
+                    case 'PHASE 2'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'blue';
+                    case 'PHASE 3'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'red';
+                    case 'PHASE 4'
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'purple';
+                    otherwise
+                        MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'black';
+                end
+                
+%             else
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).synctime      = hyp_file.endSec(strcmp(hyp_file.stage, label));  % replace space with underscore
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).trialnum      = zeros(size(MuseStruct.markers.(strrep(label{1},' ','_')).synctime));  % replace space with underscore
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).classgroupid  = '+3';
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).comment       = 'Exported from hypnogram';
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).editable      = 'Yes';
+%                 MuseStruct.markers.(strrep(label{1},' ','_')).classid       = '+666'; % will be replaced by writeMuseMarkers.m
+%                 switch label{1}
+%                     case 'AWAKE'
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'yellow';
+%                     case 'PHASE 1'
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'green';
+%                     case 'PHASE 2'
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'blue';
+%                     case 'PHASE 3'
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'red';
+%                     case 'PHASE 4'
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'purple';
+%                     otherwise
+%                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'black';
+%                 end
             end
         end
         
         % backup markerfile
-        if ~exist(cfg.backupdir,'DIR')
+        if ~exist(cfg.hyp.backupdir,'DIR')
             error('Backup directory does not exist');
         end
-        if ~exist(fullfile(cfg.backupdir,neuralynx_dirlist(idir).name),'DIR')
-            fprintf('Creating directory: %s\n',fullfile(cfg.backupdir,neuralynx_dirlist(idir).name));
-            eval(sprintf('!mkdir %s',fullfile(cfg.backupdir,neuralynx_dirlist(idir).name)));
+        if ~exist(fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name),'DIR')
+            fprintf('Creating directory: %s\n',fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name));
+            eval(sprintf('!mkdir %s',fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name)));
         end
         fname_backup = sprintf('Events_%s.mrk', datestr(now, 'mm-dd-yyyy_HH-MM-SS'));
-        eval(sprintf('!cp %s %s',name_mrk,fullfile(cfg.backupdir,neuralynx_dirlist(idir).name,fname_backup)));
-        fprintf('Succesfully backed up markerfile to %s',fullfile(cfg.backupdir,neuralynx_dirlist(idir).name,fname_backup));
-     
+        eval(sprintf('!cp %s %s',name_mrk,fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name,fname_backup)));
+        fprintf('Succesfully backed up markerfile to %s',fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name,fname_backup));
+        
         % write new event structure
         fname_out = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk');
         writeMuseMarkers(MuseStruct, fname_out);

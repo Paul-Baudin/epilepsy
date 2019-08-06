@@ -24,12 +24,21 @@ config{2}.labels.micro              = {'mCinp_1'};
 config{2}.directory_searchstring    = '*';
 
 % patient 3
-config{3}.prefix                    = 'seg_xxx_';
+config{3}.prefix                    = 'seg_2379_';
 config{3}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/seg';
 config{3}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/seg';
-config{3}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_xxxx_xxxx/eeg/';
-config{3}.labels.macro              = {'_HaT2_1'};
-config{3}.labels.micro              = {'mHaT2_1'};
+config{3}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_02379_0828/eeg/';
+config{3}.labels.macro              = {'_Ha2d_1'};
+config{3}.labels.micro              = {'mHa2d_1'};
 config{3}.directory_searchstring    = '*';
+
+% patient 4
+config{4}.prefix                    = 'seg_2614_';
+config{4}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/seg';
+config{4}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/seg';
+config{4}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_02614_1073/eeg/';
+config{4}.labels.macro              = {'_Casd_1'};
+config{4}.labels.micro              = {'mCasd_1'};
+config{4}.directory_searchstring    = '*';
 
 end

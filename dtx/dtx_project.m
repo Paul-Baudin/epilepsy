@@ -1,12 +1,12 @@
-%% Analysis script
+%% Analysis script DT PROJECT
 %
 % (c) Stephen Whitmarsh, stephen.whitmarsh@gmail.com
 %
 % requires bandpassFilter.m from Mario
 % requires releaseDec2015 from Neuralynx website
 
-addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/hspike/
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/shared/
+addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/dtx/
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
 ft_defaults
 
@@ -21,74 +21,125 @@ feature('DefaultCharacterSet', 'CP1252') % To fix bug for weird character proble
 %% General analyses
 
 
-for ipatient = 1
+for ipatient = 4:6
     
-    config = sw_setparams([]);
-    force = false;
+    config = dtx_setparams([]);    
     
-    
-    % export hypnogram to muse
-    export_hypnogram(config{ipatient});
-
     % read muse markers
     [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, true);
-       
-    % plot hypnogram
-    plotHypnogram(config{ipatient},MuseStruct_micro)
+    
+    % align Muse markers according to peaks and detect whether they contain artefacts
+    [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, true);
     
     % read LFP data
     [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
     
-    % cluster pattern
-    findPattern(config{ipatient}, dat_micro, dat_macro, force)
     
-    % read Spyking-Circus params file 
-    ini = IniConfig();
-    ini.ReadFile('SpykingCircusDefaults.params')
+    % TFR
     
-    % remove inline comments
-    [sections, count_sections] = ini.GetSections();
-    for sectioni = 1 : count_sections
-        [keys, count_keys] = ini.GetKeys(sections{sectioni});
-        for keysi = 1 : count_keys
-            old = ini.GetValues(sections{sectioni}, keys{keysi});
-            temp = split(old,{'#',' '});
-            ini.SetValues(sections{sectioni}, keys{keysi}, temp{1});
-        end
+%     fig             = figure;
+%     fig.Renderer    = 'Painters'; % Else pdf is saved to bitmap
+%     h               = 5000;
+%     
+%     hold;
+%     imarker = 1;
+%     ichannel = 6;
+%     for itrial = 101 : 200 %size(dat_micro{imarker}.trial,2)
+%         plot(dat_micro{imarker}.time{itrial},dat_micro{imarker}.trial{itrial}(ichannel,:) + itrial*h,'color','k');
+%     end
+%     axis tight
+%     
+    
+    fig             = figure;
+    fig.Renderer    = 'Painters'; % Else pdf is saved to bitmap
+    h               = 5000;
+    
+    hold;
+    imarker = 1;
+    ichannel = 6;
+    for itrial = 1 : size(dat_micro{imarker}.trial,2)
+        plot(dat_micro{imarker}.time{itrial},dat_micro{imarker}.trial{itrial}(ichannel,:) + itrial*h,'color','k');
     end
+    axis tight;
+    xlabel('Time from SlowWave');
+    ylabel('Amplitude');
     
-    ini.ToString()
-  
-    % Example:
-    %   ini = IniConfig();
-    %   ini.ReadFile('example.ini')
-    %   sections = ini.GetSections()
-    %   [keys, count_keys] = ini.GetKeys(sections{1})
-    %   values = ini.GetValues(sections{1}, keys)
-    %   new_values(:) = {rand()};
-    %   ini.SetValues(sections{1}, keys, new_values, '%.3f')
-    %   ini.WriteFile('example1.ini')
-    %
-    % Example:
-    %   ini = IniConfig();
-    %   ini.AddSections({'Some Section 1', 'Some Section 2'})
-    %   ini.AddKeys('Some Section 1', {'some_key1', 'some_key2'}, {'hello!', [10, 20]})
-    %   ini.AddKeys('Some Section 2', 'some_key3', true)
-    %   ini.AddKeys('Some Section 2', 'some_key1')
-    %   ini.WriteFile('example2.ini')
-    %
-    % Example:
-    %   ini = IniConfig();
-    %   ini.AddSections('Some Section 1')
-    %   ini.AddKeys('Some Section 1', 'some_key1', 'hello!')
-    %   ini.AddKeys('Some Section 1', {'some_key2', 'some_key3'}, {[10, 20], [false, true]})
-    %   ini.WriteFile('example31.ini')
-    %   ini.RemoveKeys('Some Section 1', {'some_key1', 'some_key3'})
-    %   ini.RenameKeys('Some Section 1', 'some_key2', 'renamed_some_key2')
-    %   ini.RenameSections('Some Section 1', 'Renamed Section 1')
-    %   ini.WriteFile('example32.ini')
-    %
-     
+    % print ISI to file
+    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
+    set(fig,'PaperOrientation','landscape');
+    set(fig,'PaperUnits','normalized');
+    set(fig,'PaperPosition', [0 0 1 1]);
+    print(fig, '-dpdf', fullfile(config{ipatient}.imagesavedir,[config{ipatient}.prefix, 'Timecourses_seizures.pdf']),'-r600');
+    
+    % time frequency analysis
+    cfgtemp                         = [];
+    cfgtemp.channel                 = 'all'; %ichannel;
+    cfgtemp.method                  = 'mtmconvol';
+    cfgtemp.output                  = 'pow';
+    cfgtemp.taper                   = 'hanning';
+    cfgtemp.pad                     = 'nextpow2';
+    cfgtemp.keeptrials              = 'yes';
+    cfgtemp.foi                     = 1:0.5:50;
+    cfgtemp.t_ftimwin               = 9./cfgtemp.foi;
+    cfgtemp.toi                     = [-5:0.01:25];
+    TFR{imarker}                    = ft_freqanalysis(cfgtemp,dat_micro{imarker});
+    
+    TFR_log = TFR;
+    TFR_log{imarker}.powspctrm = log(TFR_log{imarker}.powspctrm);
+    
+    fig = figure;
+    subplot(2,1,1);
+    cfgtemp               = [];
+    cfgtemp.channel         = ichannel;
+    cfgtemp.baseline        = [-4, -2];
+    cfgtemp.baselinetype    = 'relchange';
+    cfgtemp.colorbar        = 'no';
+    cfgtemp.colorbar        = 'yes';
+    cfgtemp.zlim            = 'maxabs';
+    cfgtemp.xlim            = [-5 30];
+    cfgtemp.title           = 'Relative change from Baseline';
+    cfgtemp.parameter       = 'powspctrm';
+    cfgtemp.colormap        = parula(5000);
+    cfgtemp.renderer        = 'painters';
+    ft_singleplotTFR(cfgtemp,TFR{imarker} );
+    
+    subplot(2,1,2);
+    cfgtemp               = [];
+    cfgtemp.channel         = ichannel;
+    cfgtemp.baseline        = [-4, -2];
+    cfgtemp.baselinetype    = 'relchange';
+    cfgtemp.colorbar        = 'no';
+    cfgtemp.colorbar        = 'yes';
+    cfgtemp.zlim            = 'maxabs';
+    cfgtemp.xlim            = [-5 30];
+    cfgtemp.title           = 'Relative change (log power) from Baseline';
+    cfgtemp.parameter       = 'powspctrm';
+    cfgtemp.colormap        = parula(5000);
+    cfgtemp.renderer        = 'painters';
+    ft_singleplotTFR(cfgtemp,TFR_log{imarker} );
+    
+    % print ISI to file
+    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
+    set(fig,'PaperOrientation','landscape');
+    set(fig,'PaperUnits','normalized');
+    set(fig,'PaperPosition', [0 0 1 1]);
+    print(fig, '-dpdf', fullfile(config{ipatient}.imagesavedir,[config{ipatient}.prefix, 'Avg_TFR_seizures.pdf']),'-r600');
+    
+    
+end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     

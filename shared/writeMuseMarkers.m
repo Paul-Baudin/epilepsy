@@ -62,12 +62,13 @@ for imarker = 1 : mrk_number
     
     if nr_samples > 0
         % add samples
-        for itrial = 1 : size(MuseStruct.markers.(names{imarker}).synctime,1)
-            if ~isfield(MuseStruct.markers.(names{imarker}),'trialnum')
-                fprintf(fid,'                  +0\t\t\t\t+%.10f\n',MuseStruct.markers.(names{imarker}).synctime(itrial));
-            else
-                fprintf(fid,'                  +%d\t\t\t\t+%.10f\n',MuseStruct.markers.(names{imarker}).trialnum(itrial),MuseStruct.markers.(names{imarker}).synctime(itrial));
-            end
+        fprintf('Wrote %d events of: %s\n',length(MuseStruct.markers.(names{imarker}).synctime),names{imarker});
+        for itrial = 1 : length(MuseStruct.markers.(names{imarker}).synctime)
+            %             if ~isfield(MuseStruct.markers.(names{imarker}),'trialnum')
+            fprintf(fid,'                  +0\t\t\t\t+%.10f\n',MuseStruct.markers.(names{imarker}).synctime(itrial));
+            %             else
+            %                 fprintf(fid,'                  +%d\t\t\t\t+%.10f\n',MuseStruct.markers.(names{imarker}).trialnum(itrial),MuseStruct.markers.(names{imarker}).synctime(itrial))
+            %             end
         end
     end
     fprintf(fid,'\n\n');
