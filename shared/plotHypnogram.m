@@ -84,9 +84,11 @@ while i < height(t)
     i = i + 1;
 end
 
-% select labels to plot
-t(contains(t.markerlabel,config.hyp.notcontains),:) = [];
-t = t(contains(t.markerlabel,config.hyp.contains),:);
+% select hypnogram labels to plot
+hyp_tbl = t(contains(t.markerlabel,config.hyp.contains),:);
+mrk_tbl = t(contains(t.markerlabel,config.hyp.markers),:);
+
+
 
 % 
 % startsindx = find(contains(t.markerlabel,'CriseStart'));
@@ -97,44 +99,51 @@ t = t(contains(t.markerlabel,config.hyp.contains),:);
 % fprintf('\n%d Patterns found\n',numel(startsindx));
 
 % segment into patterns/seizures/hypnograms
-startsindx  = [1; find(diff(t.endtime) > hours(2))+1];
-endsindx    = [find(diff(t.endtime) > hours(2)); height(t)];
+hyp_startsindx  = [1; find(diff(hyp_tbl.endtime) > hours(2))+1];
+hyp_endsindx    = [find(diff(hyp_tbl.endtime) > hours(2)); height(hyp_tbl)];
 
-ii = 1;
-for i = 1 : numel(startsindx)
-    if endsindx(i) - startsindx(i) > 1
-        s{ii}       = t(startsindx(i)+1:endsindx(i)-1,:);
-        Cstart(ii)  = t.starttime(startsindx(i));
-        Cend(ii)    = t.starttime(endsindx(i));
-        ii          = ii + 1;
-    end
+for i = 1 : numel(hyp_startsindx)
+    hyp_night{i}       = hyp_tbl(hyp_startsindx(i)+1:hyp_endsindx(i)-1,:);
+    hyp_starttime(i)   = hyp_tbl.starttime(hyp_startsindx(i));
+    hyp_endtime(i)     = hyp_tbl.starttime(hyp_endsindx(i));
+    mrk_night{i}       = mrk_tbl(mrk_tbl.starttime >= hyp_starttime(i) & mrk_tbl.endtime <= hyp_endtime(i),:);
+    
 end
-t(contains(t.markerlabel,config.pattern.startmarker) | contains(t.markerlabel,config.pattern.endmarker),:) = [];
-maxlength = max(Cend - Cstart);
+% t(contains(t.markerlabel,config.pattern.startmarker) | contains(t.markerlabel,config.pattern.endmarker),:) = [];
+maxlength = max(hyp_endtime - hyp_starttime);
 
 
 %% plotting
-colortable.label = unique(t.markerlabel);
-colortable.color = linspecer(numel(unique(t.markerlabel)));
+colortable.label = unique(mrk_tbl.markerlabel);
+colortable.color = linspecer(numel(unique(mrk_tbl.markerlabel)));
 
 h = figure;
-for is = 1 : size(s,2)
-    subplot(size(s,2)+1,1,is); hold;
-    fill([s{is}.starttime(1), Cstart(is) + maxlength, Cstart(is) + maxlength, s{is}.starttime(1)],[0 0 1 1],[1 1 1],'EdgeColor',[1 1 1]);
+for nighti = 1 : size(hyp_night,2)
+    
+    subplot(size(hyp_night,2)+1,1,nighti); hold;
+    fill([hyp_night{nighti}.starttime(1), hyp_starttime(nighti) + maxlength, hyp_starttime(nighti) + maxlength, hyp_night{nighti}.starttime(1)],[0 0 1 1],[1 1 1],'EdgeColor',[1 1 1]);
     X = [];
     Y = [];
-    for im = 1 : height(s{is})
-        c = colortable.color(strcmp(colortable.label,s{is}.markerlabel(im)),:);
+    
+    for im = 1 : height(mrk_night{nighti})
+        
+        c = colortable.color(strcmp(colortable.label,mrk_night{nighti}.markerlabel(im)),:);
+        fill([mrk_night{nighti}.starttime(im), mrk_night{nighti}.endtime(im), mrk_night{nighti}.endtime(im), mrk_night{nighti}.starttime(im)],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
+    end
+    
+    for im = 1 : height(hyp_night{nighti})
         if ~isempty(X)
-            if s{is}.starttime(im) ~= X(end)
-                X = [X, X(end) s{is}.starttime(im)];
-                Y = [Y, 0 0];
+            if hyp_night{nighti}.starttime(im) ~= X(end)
+                X = [X, X(end) hyp_night{nighti}.starttime(im)];
+                Y = [Y, 0,  0];
             end
         end
-        X = [X, s{is}.starttime(im), s{is}.endtime(im)];
-        y = find(contains(config.hyp.contains,t.markerlabel(im)));
+        
+        X = [X, hyp_night{nighti}.starttime(im), hyp_night{nighti}.endtime(im)];
+        y = find(contains(config.hyp.contains,hyp_night{nighti}.markerlabel(im)));
         Y = [Y, y, y];
     end
+    
     for i = 1 : length(X)-1
         if Y(i) ~= 0 && Y(i+1) ~= 0
             if strcmp(config.hyp.contains(Y(i)),'REM') && strcmp(config.hyp.contains(Y(i+1)),'REM')
@@ -149,18 +158,20 @@ for is = 1 : size(s,2)
     set(gca,'Ytick', 1 : length(config.hyp.contains),'Yticklabels',strrep(config.hyp.contains,'_',' '),'TickDir','out');
     axis tight;
 end
-% 
-% subplot(size(s,2)+1,1,size(s,2)+1); hold;
-% for marker = 1 : numel(colortable.label)
-%     c = colortable.color(marker,:);
-%     x1 = marker*2;
-%     x2 = marker*2+1.5;
-%     fill([x1,x2,x2,x1],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
-%     text((x1+x2)/2,0.1,colortable.label(marker),'Rotation',90,'Fontsize',10);
-%     set(gca,'Layer','top');
-% end
-% set(gca,'XTick',[]);
-% axis tight
+
+% add color legend for markers
+subplot(size(hyp_night,2)+1,1,size(hyp_night,2)+1); hold;
+
+for marker = 1 : numel(colortable.label)
+    c = colortable.color(marker,:);
+    x1 = marker*2;
+    x2 = marker*2+1.5;
+    fill([x1,x2,x2,x1],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
+    text((x1+x2)/2,0.1,colortable.label(marker),'Rotation',90,'Fontsize',10);
+    set(gca,'Layer','top');
+end
+set(gca,'XTick',[]);
+axis tight
 
 % print to file
 set(h,'PaperOrientation','landscape');

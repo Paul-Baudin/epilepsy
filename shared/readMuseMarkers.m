@@ -167,8 +167,7 @@ for type = ["micro","macro"]
                     for imarker = 1 : nmarkers
                         name{imarker} = strrep(name{imarker},'-','_'); % cant make fieldnames with minusses
                         
-                        try
-                        
+                       
                         MuseStruct{idir}.markers.(name{imarker}).events         = [];
                         MuseStruct{idir}.markers.(name{imarker}).comment        = comment{imarker};
                         MuseStruct{idir}.markers.(name{imarker}).color          = color{imarker};
@@ -194,8 +193,6 @@ for type = ["micro","macro"]
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).duration    = 0;
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).offset      = MuseStruct{idir}.markers.(name{imarker}).offset(ievent);
                             MuseStruct{idir}.markers.(name{imarker}).events(end ).time        = marks{imarker}(ievent,2);
-                        end
-                        catch
                         end
                     end
                 else

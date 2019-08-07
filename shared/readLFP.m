@@ -80,7 +80,7 @@ else
                                 end
                             end
                         end
-                        
+
                         % load trials for selected MICRO channels
                         for ifile = micro_filenrs
                             

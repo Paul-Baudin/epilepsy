@@ -242,8 +242,62 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     for idir = [hasoverlap{iMicroMed}]
         
         % first read Muse events file
-        name_mrk = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk'); 
-        MuseStruct = readMuseMarker(name_mrk);
+        name_mrk = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk');
+        
+        if ~exist(name_mrk)
+            error('%s not found!', name_mrk);
+        end
+        f = fopen(name_mrk, 'rt');
+        markfile = {};
+        while true
+            l = fgetl(f);
+            if ~ischar(l)
+                break
+            end
+            markfile{end + 1} = l;
+        end
+        fclose(f);
+        
+        if isempty(markfile)
+            error('\n\n %s is empty!!! \n\n',name_mrk);
+        end
+        nmarkers        = str2num(markfile{strmatch('NUMBER OF MARKERS:',       markfile, 'exact') + 1});
+        classgroupid    = markfile(strmatch('CLASSGROUPID:',                    markfile, 'exact') + 1);
+        name            = markfile(strmatch('NAME:',                            markfile, 'exact') + 1);
+        comment         = markfile(strmatch('COMMENT:',                         markfile, 'exact') + 1);
+        color           = markfile(strmatch('COLOR:',                           markfile, 'exact') + 1);
+        editable        = markfile(strmatch('EDITABLE:',                        markfile, 'exact') + 1);
+        classid         = markfile(strmatch('CLASSID:',                         markfile, 'exact') + 1);
+        nrEvents        = str2num(char(markfile(strmatch('NUMBER OF SAMPLES:',  markfile, 'exact') + 1)));
+        
+        % Get the events, time is in seconds from onset of file
+        clear marks
+        j = strmatch('LIST OF SAMPLES:', markfile, 'exact') + 2;
+        for imarker = 1 : nmarkers
+            marks{imarker} = str2num(char(markfile(j(imarker):j(imarker) + nrEvents(imarker) - 1)));
+            
+            % Convert from index origin 0 to 1
+            if nrEvents(imarker) ~= 0
+                marks{imarker}(:, 1) = marks{imarker}(:, 1) + 1;
+            end
+        end
+        
+        % put data back into structure to write later
+        clear MuseStruct
+        for imarker = 1 : nmarkers
+            name{imarker} = strrep(name{imarker},'-','_'); % cant make fieldnames with minusses
+            MuseStruct.markers.(name{imarker}).comment        = comment{imarker};
+            MuseStruct.markers.(name{imarker}).color          = color{imarker};
+            MuseStruct.markers.(name{imarker}).editable       = editable{imarker};
+            MuseStruct.markers.(name{imarker}).classid        = classid{imarker};
+            MuseStruct.markers.(name{imarker}).classgroupid   = classgroupid{imarker};
+            for ievent = 1 : nrEvents(imarker)
+                MuseStruct.markers.(name{imarker}).trialnum(ievent) = marks{imarker}(ievent,1);
+                MuseStruct.markers.(name{imarker}).synctime(ievent) = marks{imarker}(ievent,2);
+            end
+        end
+        
+        clear markers
         
         % select those hypnogram markers that belong the the current Muse (neuralynx) marker file
         hyp_file = hyp(hyp.startfilenr == hypi,:);
@@ -252,7 +306,7 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
             
             if strcmp(label,'BEGIN')
                 
-                MuseStruct.markers.StartHypnogram.synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
+                MuseStruct.markers.StartHypnogram.synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
                 MuseStruct.markers.StartHypnogram.trialnum       = 0;  
                 MuseStruct.markers.StartHypnogram.classgroupid   = '+3';
                 MuseStruct.markers.StartHypnogram.comment        = 'Exported from hypnogram';
@@ -263,7 +317,7 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
             
             if strcmp(label,'END')
                 
-                MuseStruct.markers.EndHypnogram.synctime        = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
+                MuseStruct.markers.EndHypnogram.synctime        = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
                 MuseStruct.markers.EndHypnogram.trialnum        = 0;  
                 MuseStruct.markers.EndHypnogram.classgroupid    = '+3';
                 MuseStruct.markers.EndHypnogram.comment         = 'Exported from hypnogram';
@@ -275,8 +329,8 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
             % for those markers that have a duration
             if hyp_file.startSec(strcmp(hyp_file.stage, label)) ~= hyp_file.endSec(strcmp(hyp_file.stage, label))
                 
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum       = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime))';  % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum       = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime));  % replace space with underscore
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classgroupid   = '+3';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).comment        = 'Exported from hypnogram';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).editable       = 'Yes';
@@ -297,8 +351,8 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
                         MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'black';
                 end
                 
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime))';  % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label));     % replace space with underscore
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime));  % replace space with underscore
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classgroupid = '+3';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).comment      = 'Exported from hypnogram';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).editable     = 'Yes';
@@ -353,11 +407,11 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
         end
         fname_backup = sprintf('Events_%s.mrk', datestr(now, 'mm-dd-yyyy_HH-MM-SS'));
         eval(sprintf('!cp %s %s',name_mrk,fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name,fname_backup)));
-        fprintf('Succesfully backed up markerfile to %s\n',fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name,fname_backup));
+        fprintf('Succesfully backed up markerfile to %s',fullfile(cfg.hyp.backupdir,neuralynx_dirlist(idir).name,fname_backup));
         
         % write new event structure
-        fname_out = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk');
-%         fname_out = fullfile(cfg.hyp.markerdir,[neuralynx_dirlist(idir).name,'.mrk']);
+%         fname_out = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk');
+        fname_out = fullfile(cfg.hyp.markerdir,neuralynx_dirlist(idir).name,'Events.mrk');
         
         writeMuseMarkers(MuseStruct, fname_out);
         hypi = hypi + 1;

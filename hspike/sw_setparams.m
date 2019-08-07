@@ -23,7 +23,9 @@ config{1}.hyp.imagesavedir          = '/network/lustre/iss01/charpier/analyses/s
 config{1}.hyp.backupdir             = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/markerbackup';
 config{1}.hyp.micromedchannel       = 'F3p6';
 config{1}.hyp.contains              = {'NO_SCORE','AWAKE','PHASE_1','PHASE_2','PHASE_3','REM'}; % in order of height in plot
-config{1}.hyp.notcontains           = {"ADStartLoss","ADEndLoss","TTL","StartRecord","StopRecord","NLXEvent","BAD"};
+config{1}.hyp.markers               = {'Hspike','BAD'};
+config{1}.hyp.markerdir             = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/hspike';
+% config{1}.hyp.notcontains           = {"ADStartLoss","ADEndLoss","TTL","StartRecord","StopRecord","NLXEvent","BAD"};
 
 config{1}.align.channel             = {'_HaT2_1'};                                                                                    % pattern to identify channel on which to based peak detection                                                                        % peak threshold: fraction (0:inf) of mean peak amplitude in baseline period
 config{1}.align.flip                = {'yes'};

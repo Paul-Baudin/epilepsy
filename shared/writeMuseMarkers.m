@@ -16,10 +16,10 @@ function writeMuseMarkers(MuseStruct,fname)
 
 names           = fieldnames(MuseStruct.markers);
 mrk_number      = length(fieldnames(MuseStruct.markers));
-[fid, message]  = fopen(fname,'w');
+[fid, message]  = fopen(fname,'w+'); % open/create and discard content
 
 if message ~= 0
-    fprintf('ERROR, something went wrong with reading the markerfile %s',fname);
+    fprintf('ERROR, something went wrong with reading the markerfile %s\n',fname);
     return
 else
     fprintf('Succesfully opened %s\n',fname);
@@ -50,7 +50,7 @@ for imarker = 1 : mrk_number
 %     fprintf(fid,'%s\n', MuseStruct.markers.(names{imarker}).classid);
     
     if isfield(MuseStruct.markers.(names{imarker}),'synctime')
-        nr_samples = size(MuseStruct.markers.(names{imarker}).synctime,1);
+        nr_samples = size(MuseStruct.markers.(names{imarker}).synctime,2);
     else
         nr_samples = 0;
     end
@@ -77,7 +77,7 @@ end
 
 exitcode = fclose(fid);
 if exitcode ~= 0
-    disp('ERROR, something went wrong with writing the markerfile. Is it open?');
+    disp('ERROR, something went wrong with writing the markerfile. Is it open?\n');
 else
     fprintf('Succesfully written markers to: %s\n',fname);
 end
