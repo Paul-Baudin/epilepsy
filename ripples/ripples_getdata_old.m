@@ -25,26 +25,23 @@ for ipatient = 1:length(vect_pat)
                             fout_table{ifname}      = join([num2str(vect_pat(ipatient)),'-',p_som{ipart},'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-table'],'');
                             fout_data{ifname}       = join([num2str(vect_pat(ipatient)),'-',p_som{ipart},'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-data'],'');
                             electrodetype(ifname)   = electype;
-                            eleclocation(ifname)    = location(electype,elec,ipatient);
                             ifname                  = ifname + 1;
                         end
-                        % if NOT different patterns
+                    % if NOT different patterns        
                     else
                         RLfilename{ifname}      = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'.rhfe'],'');
                         fout_table{ifname}      = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-table'],'');
                         fout_data{ifname}       = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-data'],'');
                         electrodetype(ifname)   = electype;
-                        eleclocation(ifname)    = location(electype,elec,ipatient);
                         ifname                  = ifname + 1;
                     end
-                    
-                    % if awake
+                
+                % if awake
                 else
                     RLfilename{ifname}      = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'.rhfe'],'');
                     fout_table{ifname}      = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-table'],'');
                     fout_data{ifname}       = join([num2str(vect_pat(ipatient)),'-',period{iperiod},'-',electrode{electype},'-',num2str(elec),'-data'],'');
                     electrodetype(ifname)   = electype;
-                    eleclocation(ifname)    = location(electype,elec,ipatient);
                     ifname                  = ifname + 1;
                 end
             end
@@ -72,7 +69,7 @@ for ifile = 1:length(RLfilename)
         trials      = temp.v_Intervals;                             % partie du fichier
         
         Fs          = dat_rl.st_FileData.v_SampleRate;
-        
+
         label       = dat_rl.st_FileData.v_Labels;                  %name of the montage
         
         % extraction par evenement
@@ -102,44 +99,36 @@ for ifile = 1:length(RLfilename)
         tbl.Eventtype   = temp.st_HFOInfo.v_EvType;
         tbl.EventStart  = ((debut/Fs)+(evenements(:,1)/Fs));
         tbl.Duration    = (evenements(:,2)-evenements(:,1))/(Fs/1000);    % duratin of the event
-        tbl.typename    = categorical (tbl.Eventtype,[1:24],{'None','Gamma','Ripple','FastRipple','Spike','Artifact','Ripple_Multi','Ripple_HFA','Fast_on_Ripple','Plat_iso','Plat_OL','HFA_iso','HFA_OL','cSharp_iso','cSharp_OL','eSpike_iso','eSpike_OL','HighRipple','pattern17','pattern18','pattern19','pattern20','pattern21','pattern22'});
         
         % max min analysis
-        duree_select    = 0.2;   % duration to calculate max and min (in second)
+        duree_select    = 0.5;   % duration to calculate max and min (in second)
         
         % part of signal for extremum analysis
         for i=1:size(trials,1)
             
-            % this part now breaks - did you change it Laurent?
-            try
-                if evenements_rel(i,1)+duree_select*Fs <= length(trials{i})
-                    trial_select    = trials{i}(evenements_rel(i,1)-(duree_select*Fs) : (evenements_rel(i,1)+(duree_select*Fs)));
-                else
-                    trial_select    = trials{i}(evenements_rel(i,1) : end);
-                end
-                
-                [M, index]          = max(trial_select);
-                index_s             = index/Fs;
-                tbl.Max_mV(i)       = M;
-                tbl.Max_s(i)        = index_s;
-                
-                [m, index]          = min(trial_select);
-                index_s             = index/Fs;
-                tbl.Min_mV(i)       = M;
-                tbl.Min_s(i)        = index_s;
-                tbl.ampl_debut(i)   = trials{i}(evenements_rel(i,1));
-                
-            catch
-                disp('something went wrong calculating max/min');
-                tbl.Min_mV(i)       = nan;
-                tbl.Min_s(i)        = nan;
-                tbl.ampl_debut(i)   = nan;
+            if evenements_rel(i,1)+duree_select*Fs <= length(trials{i})
+                trial_select    = trials{i}(evenements_rel(i,1) : (evenements_rel(i,1)+(duree_select*Fs)));
+            else
+                trial_select    = trials{i}(evenements_rel(i,1) : end);
             end
+            
+            [M, index]          = max(trial_select);
+            index_s             = index/Fs;
+            tbl.Max_mV(i)       = M;
+            tbl.Max_s(i)        = index_s;
+            
+            [m, index]          = min(trial_select);
+            index_s             = index/Fs;
+            tbl.Min_mV(i)       = M;
+            tbl.Min_s(i)        = index_s;
+            tbl.ampl_debut(i)   = trials{i}(evenements_rel(i,1));
+            
+            tbl.typename = categorical (tbl.Eventtype,[1:24],{'None','Gamma','Ripple','FastRipple','Spike','Artifact','Ripple_Multi','Ripple_HFA','Fast_on_Ripple','Plat_iso','Plat_OL','HFA_iso','HFA_OL','cSharp_iso','cSharp_OL','eSpike_iso','eSpike_OL','HighRipple','pattern17','pattern18','pattern19','pattern20','pattern21','pattern22'});
         end
         
         %% save data
         fout = fullfile(analysisdatadir,fout_table{ifile});
-        fprintf('Saving table to:          %s\n',fout)
+        fprintf('Saving table to:          %s\n',fout)      
         save(fout,'tbl')
     else
         fprintf('File does not exist:      %s\n',fname)
@@ -160,7 +149,7 @@ for ifile = 1 : length(RLfilename)
     cfg.resamplefs  = 1000;
     dat             = ft_resampledata(cfg,dat);
     
-    
+
     for ievent = 1:4
         cfg                 = [];
         cfg.trials          = find(dat.trialinfo == eventcodes(ievent));
@@ -175,4 +164,26 @@ end
 fout = fullfile(analysisdatadir,'eventdat');
 fprintf('Saving data to:  %s\n','eventdat');
 save(fout,'eventdat','-v7.3')
+
+
+%% load data
+
+fout = fullfile(analysisdatadir,'eventdat');
+load(fout,'eventdat')
+
+hasdat = ind2sub(size(eventdat),~cellfun('isempty', eventdat));
+
+
+% combine all data
+cfg = [];
+cfg.keepsampleinfo = 'no';
+
+ER_ripple_multi_macro        = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 1,1});
+ER_ripple_single_macro       = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 1,2});
+ER_fastripple_multi_macro    = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 1,4});
+ER_fastripple_single_macro   = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 1,3});
+ER_ripple_multi_micro        = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 2,1});
+ER_ripple_single_micro       = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 2,2});
+ER_fastripple_multi_micro    = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 2,4});
+ER_fastripple_single_micro   = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 2,3});
 

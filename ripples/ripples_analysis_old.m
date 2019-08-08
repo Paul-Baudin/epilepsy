@@ -1,8 +1,5 @@
-addpath /network/lustre/iss01/home/laurent.bailly/fieldtrip/
-ft_defaults
-addpath /network/lustre/iss01/epimicro/patients/shared/Laurent/Scripts_matlab/
-
-% addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
+% addpath /network/lustre/iss01/home/laurent.bailly/fieldtrip/
+addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
 
 ft_defaults
 
@@ -34,41 +31,8 @@ analysisdatadir     = '/network/lustre/iss01/epimicro/patients/shared/Laurent/RI
 xlim_TFR = [-0.1,0.1];
 xlim_dat = [-0.4,0.4];
 
-% write Fieldtrip structures from RippleLab data - skip if done already
-% ripples_getdata
-
-%% load data
-
-fout = fullfile(analysisdatadir,'eventdat');
-load(fout,'eventdat')
-
-hasdat = ind2sub(size(eventdat),~cellfun('isempty', eventdat));
-
-% combine data to average micro-macro
-cfg                         = [];
-cfg.keepsampleinfo          = 'no';
-
-ER_ripple_multi_macro       = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 1,1});
-ER_ripple_single_macro      = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 1,2});
-ER_fastripple_multi_macro   = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 1,4});
-ER_fastripple_single_macro  = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 1,3});
-ER_ripple_multi_micro       = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 2,1});
-ER_ripple_single_micro      = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 2,2});
-ER_fastripple_multi_micro   = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 2,4});
-ER_fastripple_single_micro  = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 2,3});
-
-% loop over locations
-for iloc = 1 : 3 
-    try ER_ripple_multi_macro_loc{iloc}         = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 1 & eleclocation' == iloc,1}); catch end
-    try ER_ripple_single_macro_loc{iloc}        = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 1 & eleclocation' == iloc,2}); catch end
-    try ER_fastripple_multi_macro_loc{iloc}     = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 1 & eleclocation' == iloc,4}); catch end
-    try ER_fastripple_single_macro_loc{iloc}    = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 1 & eleclocation' == iloc,3}); catch end
-    try ER_ripple_multi_micro_loc{iloc}         = ft_appenddata(cfg,eventdat{hasdat(:,1) & electrodetype' == 2 & eleclocation' == iloc,1}); catch end
-    try ER_ripple_single_micro_loc{iloc}        = ft_appenddata(cfg,eventdat{hasdat(:,2) & electrodetype' == 2 & eleclocation' == iloc,2}); catch end
-    try ER_fastripple_multi_micro_loc{iloc}     = ft_appenddata(cfg,eventdat{hasdat(:,4) & electrodetype' == 2 & eleclocation' == iloc,4}); catch end
-    try ER_fastripple_single_micro_loc{iloc}    = ft_appenddata(cfg,eventdat{hasdat(:,3) & electrodetype' == 2 & eleclocation' == iloc,3}); catch end
-end
-
+% load data
+ripples_getdata
 
 % load data of examples
 cfg             = [];
@@ -85,7 +49,7 @@ cfg.channel     = 'all';
 cfg.method      = 'mtmconvol';
 cfg.taper       = 'hanning';
 cfg.pad         = 'nextpow2';
-cfg.foi         = 1:5:500;                         % try with steps of 1 hertz:
+cfg.foi         = 1:10:500;                         % try with steps of 1 hertz
 cfg.t_ftimwin   = 7./cfg.foi;                       % 7 cycles per time window, can try with 5
 cfg.toi         = xlim_TFR(1):0.001:xlim_TFR(2);    % can try changing xlim_TFR for more/less zoom, and the stepsize for more smooth estimates over time (but 0.001 is already pretty small)
 
@@ -100,22 +64,6 @@ TFR_ripple_multi_micro       = ft_freqanalysis(cfg, ER_ripple_multi_micro);
 TFR_ripple_single_micro      = ft_freqanalysis(cfg, ER_ripple_single_micro);
 TFR_fastripple_multi_micro   = ft_freqanalysis(cfg, ER_fastripple_multi_micro);
 TFR_fastripple_single_micro  = ft_freqanalysis(cfg, ER_fastripple_single_micro);
-
-% loop over locations
-for iloc = 1 : 3
-    % macro electrodes
-    try TFR_ripple_multi_macro_loc{iloc}       = ft_freqanalysis(cfg, ER_ripple_multi_macro_loc{iloc}); catch end
-    try TFR_ripple_single_macro_loc{iloc}      = ft_freqanalysis(cfg, ER_ripple_single_macro_loc{iloc}); catch end
-    try TFR_fastripple_multi_macro_loc{iloc}   = ft_freqanalysis(cfg, ER_fastripple_multi_macro_loc{iloc}); catch end
-    try TFR_fastripple_single_macro_loc{iloc}  = ft_freqanalysis(cfg, ER_fastripple_single_macro_loc{iloc}); catch end
-    
-    % micro electrodes
-    try TFR_ripple_multi_micro_loc{iloc}       = ft_freqanalysis(cfg, ER_ripple_multi_micro_loc{iloc}); catch end
-    try TFR_ripple_single_micro_loc{iloc}      = ft_freqanalysis(cfg, ER_ripple_single_micro_loc{iloc}); catch end
-    try TFR_fastripple_multi_micro_loc{iloc}   = ft_freqanalysis(cfg, ER_fastripple_multi_micro_loc{iloc}); catch end
-    try TFR_fastripple_single_micro_loc{iloc}  = ft_freqanalysis(cfg, ER_fastripple_single_micro_loc{iloc}); catch end
-end
-
 
 % examples
 ex1TFR          = ft_freqanalysis(cfg, ex1);
@@ -176,7 +124,7 @@ fig = figure;
 colormap jet % instead of default: parula
 
 cfg = [];
-cfg.xlim = xlim_dat; % change it at the top of the script!
+cfg.xlim = xlim_dat;
 
 subplot(2,4,1); ft_singleplotER(cfg,ER_ripple_single_micro);       title('Ripple');
 subplot(2,4,2); ft_singleplotER(cfg,ER_ripple_multi_micro);        title('Ripple Multi');
@@ -208,10 +156,10 @@ print(fig, '-dpdf', fullfile(analysisdatadir,'averages_micro.pdf'),'-r300');
 %% Plot average macro
 
 fig = figure;
-%colormap jet % instead of default: parula
+colormap jet % instead of default: parula
 
 cfg = [];
-cfg.xlim = xlim_dat; % change it at the top of the script!
+cfg.xlim = xlim_dat;
 
 subplot(2,4,1); ft_singleplotER(cfg,ER_ripple_single_macro);       title('Ripple');
 subplot(2,4,2); ft_singleplotER(cfg,ER_ripple_multi_macro);        title('Ripple Multi');
@@ -221,7 +169,7 @@ subplot(2,4,4); ft_singleplotER(cfg,ER_fastripple_multi_macro);    title('Fast-o
 cfg = [];
 cfg.baseline        = 'yes';
 cfg.baselinetype    = 'relative';
-cfg.xlim            = xlim_TFR; % change it at the top of the script!
+cfg.xlim            = xlim_TFR;
 cfg.zlim            = 'maxabs';
 cfg.colorbar        = 'no';
 cfg.title           = '';
@@ -242,80 +190,5 @@ print(fig, '-dpdf', fullfile(analysisdatadir,'averages_macro.pdf'),'-r300');
 
 
 
-%% Plot average macro for different locations
-
-for iloc = 1 : 3
-    
-    fig = figure;
-    %colormap jet % instead of default: parula
-    
-    cfg                 = [];
-    cfg.xlim            = xlim_TFR; % change it at the top of the script!
-    
-    subplot(2,4,1); try ft_singleplotER(cfg,ER_ripple_single_macro_loc{iloc});       title('Ripple');           catch end
-    subplot(2,4,2); try ft_singleplotER(cfg,ER_ripple_multi_macro_loc{iloc});        title('Ripple Multi');     catch end
-    subplot(2,4,3); try ft_singleplotER(cfg,ER_fastripple_single_macro_loc{iloc});   title('FastRipple');       catch end
-    subplot(2,4,4); try ft_singleplotER(cfg,ER_fastripple_multi_macro_loc{iloc});    title('Fast-on-Ripple');   catch end
-    
-    cfg = [];
-    cfg.baseline        = 'yes';
-    cfg.baselinetype    = 'relative';
-    cfg.xlim            = xlim_dat; % change it at the top of the script!
-    cfg.zlim            = 'maxabs';
-    cfg.colorbar        = 'no';
-    cfg.title           = '';
-    
-    % TFR average
-    subplot(2,4,5); try ft_singleplotTFR(cfg,TFR_ripple_single_macro_loc{iloc});     colorbar('southoutside'); title(''); catch end
-    subplot(2,4,6); try ft_singleplotTFR(cfg,TFR_ripple_multi_macro_loc{iloc});      colorbar('southoutside'); title(''); catch end
-    subplot(2,4,7); try ft_singleplotTFR(cfg,TFR_fastripple_single_macro_loc{iloc}); colorbar('southoutside'); title(''); catch end
-    subplot(2,4,8); try ft_singleplotTFR(cfg,TFR_fastripple_multi_macro_loc{iloc});  colorbar('southoutside'); title(''); catch end
-    
-    % print to file
-    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
-    set(fig,'PaperOrientation','landscape');
-    set(fig,'PaperUnits','normalized');
-    set(fig,'PaperPosition', [0 0 1 1]);
-    print(fig, '-dpdf', fullfile(analysisdatadir,['averages_macro_loc',num2str(iloc),'.pdf']),'-r300');
-end
-
-
-
-%% Plot average micro for different locations
-
-for iloc = 1 : 3
-    
-    fig = figure;
-    %colormap jet % instead of default: parula
-    
-    cfg                 = [];
-    cfg.xlim            = xlim_TFR; % change it at the top of the script!
-    
-    subplot(2,4,1); try ft_singleplotER(cfg,ER_ripple_single_micro_loc{iloc});       title('Ripple');           catch end
-    subplot(2,4,2); try ft_singleplotER(cfg,ER_ripple_multi_micro_loc{iloc});        title('Ripple Multi');     catch end
-    subplot(2,4,3); try ft_singleplotER(cfg,ER_fastripple_single_micro_loc{iloc});   title('FastRipple');       catch end
-    subplot(2,4,4); try ft_singleplotER(cfg,ER_fastripple_multi_micro_loc{iloc});    title('Fast-on-Ripple');   catch end
-    
-    cfg = [];
-    cfg.baseline        = 'yes';
-    cfg.baselinetype    = 'relative';
-    cfg.xlim            = xlim_dat; % change it at the top of the script!
-    cfg.zlim            = 'maxabs';
-    cfg.colorbar        = 'no';
-    cfg.title           = '';
-    
-    % TFR average
-    subplot(2,4,5); try ft_singleplotTFR(cfg,TFR_ripple_single_micro_loc{iloc});     colorbar('southoutside'); title(''); catch end
-    subplot(2,4,6); try ft_singleplotTFR(cfg,TFR_ripple_multi_micro_loc{iloc});      colorbar('southoutside'); title(''); catch end
-    subplot(2,4,7); try ft_singleplotTFR(cfg,TFR_fastripple_single_micro_loc{iloc}); colorbar('southoutside'); title(''); catch end
-    subplot(2,4,8); try ft_singleplotTFR(cfg,TFR_fastripple_multi_micro_loc{iloc});  colorbar('southoutside'); title(''); catch end
-    
-    % print to file
-    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
-    set(fig,'PaperOrientation','landscape');
-    set(fig,'PaperUnits','normalized');
-    set(fig,'PaperPosition', [0 0 1 1]);
-    print(fig, '-dpdf', fullfile(analysisdatadir,['averages_micro_loc',num2str(iloc),'.pdf']),'-r300');
-end
 
 

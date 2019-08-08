@@ -40,17 +40,17 @@ else
     fprintf('*** (re-) computing LFP data ***\n');
     fprintf('********************************\n\n');
     
-
-    % select those markers to align
+    
+    % select those markers to load
     markerlist = [];
-    for i = 1 : size(cfg.LFP.name,2)
-        if ismember(cfg.LFP.name{i},cfg.name)
+    for i = 1 : size(cfg.name,2)
+        if ismember(cfg.name{i},cfg.name)
             markerlist = [markerlist, i];
         end
     end
-
+    
     for imarker = markerlist
-            
+        
         hasmarker_micro = zeros(length(MuseStruct_micro),1);
         hasmarker_macro = zeros(length(MuseStruct_macro),1);
         
@@ -76,11 +76,11 @@ else
                             for ilabel = 1 : size(cfg.labels.macro,2)
                                 if ~isempty(strfind(MuseStruct_macro{idir}.filenames{ifile},cfg.labels.macro{ilabel}))
                                     macro_filenrs       = [macro_filenrs, ifile];
-                                    macrolabel{ifile}   = cfg.labels.macro{ilabel};              
+                                    macrolabel{ifile}   = cfg.labels.macro{ilabel};
                                 end
                             end
                         end
-
+                        
                         % load trials for selected MICRO channels
                         for ifile = micro_filenrs
                             
@@ -101,18 +101,18 @@ else
                                 Startsample(ievent) = MuseStruct_micro{idir}.markers.(cfg.muse.startend{imarker,1}).offset(ievent) + cfg.epoch.toi{imarker}(1) * hdr_micro.Fs - cfg.epoch.pad(imarker) * hdr_micro.Fs;
                                 Endsample(ievent)   = MuseStruct_micro{idir}.markers.(cfg.muse.startend{imarker,2}).offset(ievent) + cfg.epoch.toi{imarker}(2) * hdr_micro.Fs + cfg.epoch.pad(imarker) * hdr_micro.Fs;
                                 trialnr(ievent)     = ievent;
-                                Stage(ievent)       = 0;
+                                Stage(ievent)       = -1;
                                 
                                 % find overlap with hypnogram markers
-                                for hyplabel = {'PHASE_1','PHASE_2','PHASE_3','REM','AWAKE'}
+                                for hyplabel = {'PHASE_1','PHASE_2','PHASE_3','REM','AWAKE','NO_SCORE'}
                                     if isfield(MuseStruct_micro{idir}.markers,[cell2mat(hyplabel),'__START__'])
                                         for i = 1 : size(MuseStruct_micro{idir}.markers.([cell2mat(hyplabel),'__START__']).events,2)
                                             x1 = MuseStruct_micro{idir}.markers.(cfg.muse.startend{imarker,1}).offset(ievent);
                                             x2 = MuseStruct_micro{idir}.markers.(cfg.muse.startend{imarker,2}).offset(ievent);
                                             y1 = MuseStruct_micro{idir}.markers.([cell2mat(hyplabel),'__START__']).offset(i);
                                             y2 = MuseStruct_micro{idir}.markers.([cell2mat(hyplabel),'__END__']).offset(i);
-                                            
-                                            if intersect(x1:x2,y1:y2)
+                                            if (y1 < x1) && (x1 < y2)
+                                                %                                             if intersect(x1:x2,y1:y2)
                                                 fprintf('Found "%s" overlapping with "%s" : adding to trialinfo: ',cfg.name{imarker},cell2mat(hyplabel));
                                                 switch cell2mat(hyplabel)
                                                     case 'PHASE_1'
@@ -128,8 +128,11 @@ else
                                                         fprintf('%d\n',4);
                                                         Stage(ievent) = 4;
                                                     case 'AWAKE'
-                                                        fprintf('%d\n',5);
-                                                        Stage(ievent) = 5;
+                                                        fprintf('%d\n',0);
+                                                        Stage(ievent) = 0;
+                                                    case 'NO_SCORE'
+                                                        fprintf('%d\n',0);
+                                                        Stage(ievent) = 0;
                                                     otherwise
                                                         error('Unexpected label name in Hypnogram\n');
                                                 end
@@ -139,14 +142,14 @@ else
                                 end
                             end
                             
-                            Offset                              = ones(size(Endsample)) * (cfg.epoch.toi{imarker}(1) - cfg.epoch.pad(imarker)) * hdr_micro.Fs;
-                            cfgtemp                             = [];
-                            cfgtemp.trl                         = round([Startsample; Endsample; Offset]');
-                            cfgtemp.trl(:,4)                    = 1:size(cfgtemp.trl,1); % try to find trials that are missing aftewards
-                            cfgtemp.trl(:,5)                    = trialnr; % try to find trials that are missing aftewards
-                            cfgtemp.trl(:,6)                    = idir; % try to find trials that are missing aftewards
-                            cfgtemp.trl(:,7)                    = Stage; % add hypnogram stage
-                            cfgtemp.trl                         = cfgtemp.trl(Startsample > 0 & Endsample < hdr_micro.nSamples,:); % so not to read before BOF or after EOFs
+                            Offset                          = ones(size(Endsample)) * (cfg.epoch.toi{imarker}(1) - cfg.epoch.pad(imarker)) * hdr_micro.Fs;
+                            cfgtemp                         = [];
+                            cfgtemp.trl                     = round([Startsample; Endsample; Offset]');
+                            cfgtemp.trl(:,4)                = 1:size(cfgtemp.trl,1); % try to find trials that are missing aftewards
+                            cfgtemp.trl(:,5)                = trialnr; % try to find trials that are missing aftewards
+                            cfgtemp.trl(:,6)                = idir; % try to find trials that are missing aftewards
+                            cfgtemp.trl(:,7)                = Stage; % add hypnogram stage
+                            cfgtemp.trl                     = cfgtemp.trl(Startsample > 0 & Endsample < hdr_micro.nSamples,:); % so not to read before BOF or after EOFs
                             
                             cfgtemp.dataset                 = fullfile(MuseStruct_micro{idir}.directory, MuseStruct_micro{idir}.filenames{ifile});
                             filedat_micro{ifile}            = ft_redefinetrial(cfgtemp,temp);
@@ -193,20 +196,22 @@ else
                                 Startsample(ievent) = MuseStruct_macro{idir}.markers.(cfg.muse.startend{imarker,1}).offset(ievent) + cfg.epoch.toi{imarker}(1) * hdr_macro.Fs - cfg.epoch.pad(imarker) * hdr_macro.Fs;
                                 Endsample(ievent)   = MuseStruct_macro{idir}.markers.(cfg.muse.startend{imarker,2}).offset(ievent) + cfg.epoch.toi{imarker}(2) * hdr_macro.Fs + cfg.epoch.pad(imarker) * hdr_macro.Fs;
                                 trialnr(ievent)     = ievent;
-                                Stage(ievent)       = 0;
+                                Stage(ievent)       = -1;
                                 
                                 % find overlap with hypnogram markers
-                                for label = {'PHASE_1','PHASE_2','PHASE_3','REM','AWAKE'}
-                                    if isfield(MuseStruct_macro{idir}.markers,[cell2mat(label),'__START__'])
-                                        for i = 1 : size(MuseStruct_macro{idir}.markers.([cell2mat(label),'__START__']).events,2)
+                                for hyplabel = {'PHASE_1','PHASE_2','PHASE_3','REM','AWAKE','NO_SCORE'}
+                                    if isfield(MuseStruct_macro{idir}.markers,[cell2mat(hyplabel),'__START__'])
+                                        for i = 1 : size(MuseStruct_macro{idir}.markers.([cell2mat(hyplabel),'__START__']).events,2)
                                             x1 = MuseStruct_macro{idir}.markers.(cfg.muse.startend{imarker,1}).offset(ievent);
                                             x2 = MuseStruct_macro{idir}.markers.(cfg.muse.startend{imarker,2}).offset(ievent);
-                                            y1 = MuseStruct_macro{idir}.markers.([cell2mat(label),'__START__']).offset(i);
-                                            y2 = MuseStruct_macro{idir}.markers.([cell2mat(label),'__END__']).offset(i);
+                                            y1 = MuseStruct_macro{idir}.markers.([cell2mat(hyplabel),'__START__']).offset(i);
+                                            y2 = MuseStruct_macro{idir}.markers.([cell2mat(hyplabel),'__END__']).offset(i);
                                             
-                                            if intersect(x1:x2,y1:y2)
-                                                fprintf('Found "%s" overlapping with "%s" : adding to trialinfo: ',cfg.name{imarker},cell2mat(label));
-                                                switch cell2mat(label)
+                                            %                                             if intersect(x1:x2,y1:y2)
+                                            if (y1 < x1) && (x1 < y2)
+                                                
+                                                fprintf('Found "%s" overlapping with "%s" : adding to trialinfo: ',cfg.name{imarker},cell2mat(hyplabel));
+                                                switch cell2mat(hyplabel)
                                                     case 'PHASE_1'
                                                         fprintf('%d\n',1);
                                                         Stage(ievent) = 1;
@@ -220,8 +225,11 @@ else
                                                         fprintf('%d\n',4);
                                                         Stage(ievent) = 4;
                                                     case 'AWAKE'
-                                                        fprintf('%d\n',5);
-                                                        Stage(ievent) = 5;
+                                                        fprintf('%d\n',0);
+                                                        Stage(ievent) = 0;
+                                                    case 'NO_SCORE'
+                                                        fprintf('%d\n',0);
+                                                        Stage(ievent) = 0;
                                                     otherwise
                                                         error('Unexpected label name in Hypnogram\n');
                                                 end
@@ -230,8 +238,8 @@ else
                                     end
                                 end
                             end
-                            
-                            Offset                          = ones(size(Endsample)) * (cfg.epoch.toi{imarker}(1) - cfg.epoch.pad(imarker)) * hdr_micro.Fs;
+                                
+                            Offset                          = ones(size(Endsample)) * (cfg.epoch.toi{imarker}(1) - cfg.epoch.pad(imarker)) * hdr_macro.Fs;
                             cfgtemp                         = [];
                             cfgtemp.trl                     = round([Startsample; Endsample; Offset]');
                             cfgtemp.trl(:,4)                = 1:size(cfgtemp.trl,1); % try to find trials that are missing aftewards

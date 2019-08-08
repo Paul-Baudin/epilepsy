@@ -31,7 +31,7 @@ for ipatient = 1
     export_hypnogram(config{ipatient});
 
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, true);
+    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, false);
        
     % plot hypnogram
     plotHypnogram(config{ipatient},MuseStruct_micro)
@@ -39,8 +39,50 @@ for ipatient = 1
     % read LFP data
     [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
     
+    
+    figure; hold;
+    
+    for i = unique(dat_macro{1}.trialinfo(:,4))'
+        subplot(2,6,i+2);
+        cfg = [];
+        cfg.trials = find(dat_macro{1}.trialinfo(:,4) == i);
+        %         LFPmacro{i+2} = ft_timelockanalysis(cfg,dat_macro{1});
+        ft_singleplotER(cfg,dat_macro{1});
+        
+        subplot(2,6,i+2+6); hold;
+        for ii = 1 : size(dat_macro{1}.trialinfo,1)
+            if dat_macro{1}.trialinfo(ii,4) == i
+                plot(dat_macro{1}.trial{ii});
+            end
+        end
+    end
+    
+    % put all in none matrix
+    dat = zeros(size(dat_macro{1}.trial,2),size(dat_macro{1}.trial{1},2));
+    for i = 1 : size(dat_macro{1}.trial,2)
+        dat(i,:) = dat_macro{1}.trial{i};
+        cls(i) = dat_macro{1}.trialinfo(i,4);
+    end
+    
+    % simplify
+    cls(cls==-1) = 0;
+    
+    % combine for classifier
+    d = [dat, cls'];
+    
+    % for neural net
+    
+    cls_dummy = zeros(size(dat,1),size(unique(cls),2));
+    for i = 1 : size(dat,1)
+        cls_dummy(i,cls(i)+1) = 1;
+    end
+    
+    
+    
     % cluster pattern
     findPattern(config{ipatient}, dat_micro, dat_macro, force)
+    
+    
     
     % read Spyking-Circus params file 
     ini = IniConfig();
@@ -56,8 +98,11 @@ for ipatient = 1
             ini.SetValues(sections{sectioni}, keys{keysi}, temp{1});
         end
     end
-    
+      
     ini.ToString()
+    
+    
+    
   
     % Example:
     %   ini = IniConfig();
