@@ -1,0 +1,16 @@
+total_nb_channels = 5
+radius            = 150
+
+channel_groups = {
+    1: {
+        'channels':range(0,5),
+        'geometry': {
+                   0: [0, 10],
+                   1: [0, 310],
+                   2: [0, 620],
+                   3: [0, 930],
+                   4: [0, 1240],
+        },
+        'graph' : []
+    }
+}
