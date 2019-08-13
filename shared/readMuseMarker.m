@@ -57,9 +57,7 @@ if ~isempty(markfile)
             marks{i}(:, 1) = marks{i}(:, 1) + 1;
         end
     end
-    
-    
-    % convert time to samples - FROM ONSET OF FILE
+      
     for imarker = 1 : nmarkers
         name{imarker} = strrep(name{imarker},'-','_'); % cant make fieldnames with minusses
  

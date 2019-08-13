@@ -2,6 +2,7 @@ function cfg = writeSpykingCircus(cfg, MuseStruct, force)
 
 fname_output = fullfile(cfg.datasavedir,[cfg.prefix,'alldata_trialinfo.mat']);
 
+% load trialinfo to reconstruct timeline of spike data
 if exist(fname_output,'file') && force == false
     fprintf('Loading trialinfo: %s \n',fname_output);
     temp = load(fname_output,'cfg');
@@ -9,8 +10,8 @@ if exist(fname_output,'file') && force == false
     cfg.deadfile_ms         = temp.cfg.deadfile_ms;
     cfg.deadfile_samples    = temp.cfg.deadfile_samples;
     cfg.fnames_ncs          = temp.cfg.fnames_ncs;
-
 else
+    
     
     % count MICRO channels in first directory x cfg.label
 %     micro_filenrs = [];

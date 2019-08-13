@@ -24,20 +24,29 @@ feature('DefaultCharacterSet', 'CP1252') % To fix bug for weird character proble
 for ipatient = 1
     
     config = sw_setparams([]);
-    force = false;
-    
     
     % export hypnogram to muse
     export_hypnogram(config{ipatient});
 
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, false);
+    [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, false);
        
     % plot hypnogram
     plotHypnogram(config{ipatient},MuseStruct_micro)
     
     % read LFP data
-    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
+    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
+    
+    % write data concatinated for SC, and update config with sampleinfo
+    config{ipatient} = writeSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true);
+    
+    % write parameters for spyking-circus
+    writeSpykingCircusParameters_parts(config{ipatient});
+    
+    
+    
+    
+    
     
     
     figure; hold;
@@ -83,23 +92,6 @@ for ipatient = 1
     findPattern(config{ipatient}, dat_micro, dat_macro, force)
     
     
-    
-    % read Spyking-Circus params file 
-    ini = IniConfig();
-    ini.ReadFile('SpykingCircusDefaults.params')
-    
-    % remove inline comments
-    [sections, count_sections] = ini.GetSections();
-    for sectioni = 1 : count_sections
-        [keys, count_keys] = ini.GetKeys(sections{sectioni});
-        for keysi = 1 : count_keys
-            old = ini.GetValues(sections{sectioni}, keys{keysi});
-            temp = split(old,{'#',' '});
-            ini.SetValues(sections{sectioni}, keys{keysi}, temp{1});
-        end
-    end
-      
-    ini.ToString()
     
     
     

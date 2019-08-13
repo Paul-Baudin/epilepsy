@@ -13,15 +13,15 @@ else
     for imarker = 1 : size(dat_macro,2)
         
         
-        %             if force == true
-        %                 fprintf('*********************************\n');
-        %                 fprintf('** Forced redoing of alignment **\n');
-        %                 fprintf('*********************************\n\n');
-        %             else
-        %                 fprintf('**************\n');
-        %                 fprintf('** Aligning **\n');
-        %                 fprintf('**************\n\n');
-        %             end
+        if force == true
+            fprintf('*********************************\n');
+            fprintf('** Forced redoing of alignment **\n');
+            fprintf('*********************************\n\n');
+        else
+            fprintf('**************\n');
+            fprintf('** Aligning **\n');
+            fprintf('**************\n\n');
+        end
         
         % baseline correct
         cfgtemp = [];

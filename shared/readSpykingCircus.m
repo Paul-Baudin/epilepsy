@@ -166,8 +166,9 @@ else
             SpikeTrials{ilabel}             = ft_spike_maketrials(cfgtemp,SpikeRaw);
             SpikeTrials{ilabel}.clocktimes  = clocktimes;
             
-            SpikeRaw.time{ilabel}           = SpikeRaw.samples{ilabel} / hdr.Fs;
-            SpikeRaw.trial{ilabel}          = ones(size(SpikeRaw.samples{ilabel}));
+            % commented out on 9-8-2019 after looking with Zoe
+%             SpikeRaw.time{ilabel}           = SpikeRaw.samples{ilabel} / hdr.Fs;
+%             SpikeRaw.trial{ilabel}          = ones(size(SpikeRaw.samples{ilabel}));
             
         end % patterns
         SpikeRaw.trialtime = [0 hdr.nSamples / hdr.Fs];
