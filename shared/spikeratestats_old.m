@@ -1,6 +1,29 @@
 
-
 function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force)
+% 
+% Creates spike stats and figures based on raw and epoched spike data 
+%
+% Necessary input:
+% 
+% cfg.datasavedir       = data directory of results
+% cfg.circus.outputdir  = directory delow datasavedir for spyking-circus
+% cfg.circus.suffix     = from spyking-circus params files 
+% cfg.circus.channel    = micro electrode names
+%
+% The following can be retreaved with readSpykingCircus.m:
+%
+% SpikeRaw = raw spike data in FieldTrip raw spike data structure
+% SpikeTrials = spike data epoched in FieldTrip trial data structure
+%
+% force                 = whether to redo analyses or read previous save
+%                         (true/false)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 fname = fullfile(cfg.datasavedir,[cfg.prefix,'all_data_spikedata_stats.mat']);
 if exist(fname,'file') && force == false
@@ -22,17 +45,14 @@ else
     spiketrials_1s      = ft_spike_maketrials(cfgtemp,SpikeRaw);
     
     % ISI over 1-second windows
-    cfgtemp                         = [];
-    cfgtemp.outputunit              = 'spikecount';
-    cfgtemp.bins                    = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
-    cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
-    stats.isi_1s                    = ft_spike_isi(cfgtemp,spiketrials_1s);
-   
-%     RPV = (length(find(ISI < 2)) / length(ISI)) * 100
-    
-    % plot ISI for each templates of 1-sec windows
-    nrtemplates =  size(stats.isi_1s.label,2);
-
+    cfgtemp             = [];
+    cfgtemp.outputunit  = 'spikecount';
+    cfgtemp.bins        = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
+    cfgtemp.param       = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
+    stats.isi_1s        = ft_spike_isi(cfgtemp,spiketrials_1s);
+       
+    % plot ISI for each templates of 1-sec windows`
+    nrtemplates =  length(SpikeRaw.label);
     
     fig = figure; hold;
     for itemp = 1 : nrtemplates
@@ -56,22 +76,17 @@ else
     set(fig,'PaperPosition', [0 0 1 1]);
     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'ISI_1s_windows.pdf']),'-r600');
     
-    
-    % do my own way of creating ISI    
+    % ISI as continuous data
     for itemp = 1 : nrtemplates
         stats.isi{itemp} = diff(SpikeRaw.samples{itemp}) / hdr.Fs * 1000;
     end
     
+    % plot ISI histogram
     fig = figure; hold;
     for itemp = 1 : nrtemplates
-        % plot ISI fo 1-second windows
         subplot(round(nrtemplates/2+0.25),2,itemp);
-        histogram(stats.isi{itemp},'BinWidth',0.5,'BinLimits',[0,15]);
-%         bar(stats.isi_1s.time*1000,stats.isi_1s.avg(itemp,:),1);
-        [y,indx] = max(stats.isi_1s.avg(itemp,:));
-        title(sprintf('Unit: %d, Max ISI: %.1fms',itemp,stats.isi_1s.time(indx)*1000));
+        histogram(stats.isi{itemp},'BinWidth',0.5,'BinLimits',[0,25]);
         xlabel('ms');
-%         xticks(stats.isi_1s.time*1000);
         xtickangle(90);
         axis tight
         grid on
@@ -124,11 +139,11 @@ else
                 
                 xintL = linspace(x(Lx(1)),x(Lx(end)),100)';
                 yintL = spline(x(Lx),y(Lx),xintL);
-                yintL = smooth1q(yintL,10);
+                yintL = smooth(yintL,10);
                 
                 xintR = linspace(x(Rx(1)),x(Rx(end)),100)';
                 yintR = spline(x(Rx),y(Rx),xintR);
-                yintR = smooth1q(yintR,10);
+                yintR = smooth(yintR,10);
                 
                 
                 bar(x,y);
@@ -153,24 +168,22 @@ else
     set(fig,'PaperUnits','normalized');
     set(fig,'PaperPosition', [0 0 1 1]);
     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'xcorr_1s_windows.pdf']),'-r600');
-    
+
     % stats per pattern
     for ilabel = 1 : size(SpikeTrials,2)
         
+        % ISI over 1-second windows
         cfgtemp                         = [];
         cfgtemp.outputunit              = 'proportion';
         cfgtemp.bins                    = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
         cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
+        cfgtemp.keeptrials              = 'yes';
         stats.isi_pattern_all{ilabel}   = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
-        %%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%
-        cfgtemp.latency                 = cfg.stats.bltoi{ilabel};
+        cfgtemp.latency                 = [-2 -0.15];
         stats.isi_pattern_bl{ilabel}    = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
-        cfgtemp.latency                 = cfg.stats.actoi{ilabel};
+        cfgtemp.latency                 = [-0.15 0.15];
         stats.isi_pattern_ac{ilabel}    = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
         % plot ISI per channel, per latency, per template
@@ -370,8 +383,8 @@ else
             sdf_bar.dimord          = 'rpt_chan_time';
             sdf_bar.avg             = squeeze(mean(sdf_bar.trial,1));
             
-            sdf_bar_out{ilabel}     = sdf_bar;
-            sdf_orig_out{ilabel}    = sdf_orig;
+            sdf_bar_out{ilabel}{itemp} = sdf_bar;
+            sdf_orig_out{ilabel}{itemp} = sdf_orig;
             
             % calculate baseline for dummy stats
             slim(1)             = find(sdf_bar.time > cfg.stats.bltoi{ilabel}(1), 1, 'first');
@@ -488,7 +501,7 @@ else
             barh(2).FaceColor = [0 1 0];
             barh(3).FaceColor = [0 0 1];
             barh(4).FaceColor = [1 0 0];
-            legend({'1 sec all data','whole trial','baseline trial','active trial'});
+            legend({'1 sec all data','wh0le trial','baseline trial','active trial'});
             xticks(stats.isi_pattern_ac{ilabel}.time*1000);
             xtickangle(90);
             axis tight
@@ -511,22 +524,18 @@ else
             plot(temptime_int,tempsel_int,'k');
             
             axis tight
-            [Ypos,Xpos] = findpeaks(tempsel_int, temptime_int,'NPeaks',1,'SortStr','descend');
+            [Ypos,Xpos] = findpeaks(tempsel_int,temptime_int,'NPeaks',1,'SortStr','descend');
             [Yneg,Xneg] = findpeaks(-tempsel_int,temptime_int,'NPeaks',2,'SortStr','descend','MinPeakDistance',0.5);
-            
-            plot([Xpos,Xneg(1)], [Yneg(1)*0.3, Yneg(1)*0.3],'-o','Color',[1 0 0],'MarkerFaceColor',[1 0 0],'MarkerEdgeColor',[1 0 0]);
+            plot([Xpos,Xneg(1)],[Yneg(1)*0.3, Yneg(1)*0.3],'-o','Color',[1 0 0],'MarkerFaceColor',[1 0 0],'MarkerEdgeColor',[1 0 0]);
             plot([Xpos,Xneg(2)],-[Yneg(2)*0.3, Yneg(2)*0.3],'-o','Color',[0 0 1],'MarkerFaceColor',[0 0 1],'MarkerEdgeColor',[0 0 1]);
             
             x = (Xpos + Xneg(1))/2;
             y = Yneg(1)*0.1;
             text(x,y,sprintf('%.0fms',abs(Xpos-Xneg(1))*1000),'HorizontalAlignment','center');
-            stats.template_pt(itemp) = abs(Xpos-Xneg(1))*1000;
- 
+            
             x = (Xpos + Xneg(2))/2;
             y = -Yneg(2)*0.1;
             text(x,y,sprintf('%.0fms',abs(Xpos-Xneg(2))*1000),'HorizontalAlignment','center');
-            stats.template_tp(itemp)  = abs(Xpos-Xneg(2))*1000;
-            
             xlabel('time')
             
             midline = min(tempsel_int) + (max(tempsel_int) - min(tempsel_int)) / 2 ;
@@ -536,7 +545,6 @@ else
             x = sum(temptime_int(indx))/length(indx);
             y = midline*1.1;
             text(x,y,sprintf('%.0fms',(temptime_int(indx(2))-temptime_int(indx(1)))*1000),'HorizontalAlignment','center');
-            stats.template_width(itemp)  = (temptime_int(indx(2))-temptime_int(indx(1)))*1000;
             
             % print to file
             set(fig,'PaperOrientation','landscape');
@@ -550,7 +558,6 @@ else
         
     end % ilabel
     
-
     save(fname,'stats','stats_bar','sdf_orig_out','sdf_bar_out','-v7.3');
     
 end % if file already exists

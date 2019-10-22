@@ -21,8 +21,8 @@ warning('off','all');
 
 
 for type = ["micro","macro"]
-    
-    fname = fullfile(cfg.datasavedir,sprintf('%sMuseStruct_%s_parts.mat',cfg.prefix,type));
+            
+    fname = fullfile(cfg.datasavedir,sprintf('%sMuseStruct_%s_parts_%s.mat',cfg.prefix,type,cfg.os));
     
     if exist(fname,'file') && force == false
         fprintf('******************************************\n');
@@ -164,6 +164,8 @@ for type = ["micro","macro"]
                                 MuseStruct{ipart}{idir}.starttime  = datetime(headerdate,'Format','yy/MM/dd HH:mm:ss.SSS');
                         end
                         
+                        MuseStruct{ipart}{idir}.Fs                       = hdr.Fs;
+                                
                         % convert time to samples - FROM ONSET OF FILE
                         for imarker = 1 : nmarkers
                             name{imarker} = strrep(name{imarker},'-','_'); % cant make fieldnames with minusses

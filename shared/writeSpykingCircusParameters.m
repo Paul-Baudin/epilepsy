@@ -1,12 +1,11 @@
 function writeSpykingCircusParameters(cfg)
-fname_prb               = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus.prb']);
-fname_params_default    = 'SpykingCircusDefaultSettings.params'; % in path, i.e. in /shared scripts
-fname_params_patient    = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus.params']);
 
-cfg.fnames_ncs{1}
+fname_prb               = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus.prb']);
+fname_params_default    = 'SpykingCircusDefaultSettings.params';
+[~, name, ~] = fileparts(cfg.fnames_ncs{1});
+fname_params_patient    = fullfile(cfg.datasavedir,[name,'.params']);
 
 % read Spyking-Circus params file
-
 ini = IniConfig();
 ini.ReadFile(fname_params_default);
 
@@ -16,7 +15,7 @@ for sectioni = 1 : count_sections
     [keys, count_keys] = ini.GetKeys(sections{sectioni});
     for keysi = 1 : count_keys
         old = ini.GetValues(sections{sectioni}, keys{keysi});
-        temp = split(old,{'#',' '});
+        temp = split(old,{'#'});
         ini.SetValues(sections{sectioni}, keys{keysi}, temp{1});
     end
 end
@@ -43,7 +42,7 @@ fprintf(fid,'total_nb_channels = %d;\n',nb_channels);
 fprintf(fid,'radius            = 10;\n\n');
 fprintf(fid,'channel_groups = {\n');
 fprintf(fid,'\t1: {\n');
-fprintf(fid,"\t\t'channels':range(0,%d)\n",nb_channels);
+fprintf(fid,"\t\t'channels':range(0,%d),\n",nb_channels);
 fprintf(fid,"\t\t'geometry': {\n");
 for i = 1 : nb_channels
     fprintf(fid,'\t\t\t\t\t\t%d: [0, %d],\n',i-1,i*200);

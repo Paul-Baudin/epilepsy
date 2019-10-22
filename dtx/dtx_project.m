@@ -8,8 +8,17 @@
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/shared/
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilepsy/dtx/
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
+addpath(genpath('/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/spikes-master'));
+addpath(genpath('/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/npy-matlab-master'));
 ft_defaults
 
+addpath \\lexport\iss01.charpier\analyses\stephen.whitmarsh\scripts\epilepsy\shared
+addpath \\lexport\iss01.charpier\analyses\stephen.whitmarsh\scripts\epilepsy\dtx
+addpath \\lexport\iss01.charpier\analyses\stephen.whitmarsh\fieldtrip
+addpath(genpath('\\lexport\iss01.charpier\analyses\stephen.whitmarsh\scripts\spikes-master'));
+addpath(genpath('\\lexport\iss01.charpier\analyses\stephen.whitmarsh\scripts\npy-matlab-master'));
+
+ft_defaults
 
 % addpath /network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshEpilepsy/mlib6/
 % addpath /network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshEpilepsy/subaxis/
@@ -19,22 +28,122 @@ feature('DefaultCharacterSet', 'CP1252') % To fix bug for weird character proble
 
 
 %% General analyses
+dbstop if error
 
-
-for ipatient = 4:6
+for ipatient = 1:6
     
     config = dtx_setparams([]);    
     
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, true);
+    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, false);
     
     % align Muse markers according to peaks and detect whether they contain artefacts
-    [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, true);
+    [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, false);   
+    [MuseStruct_micro, MuseStruct_macro]    = MuseMarkers_update_filepath(config{ipatient},MuseStruct_micro, MuseStruct_macro);
+    
+    if ipatient == 1
+        MuseStruct_micro = MuseStruct_micro(2:end);
+        MuseStruct_macro = MuseStruct_macro(2:end);
+    end
+    if ipatient == 2
+        MuseStruct_micro = MuseStruct_micro(3:end);
+        MuseStruct_macro = MuseStruct_macro(3:end);
+    end
+    if ipatient == 3 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
+        MuseStruct_micro = MuseStruct_micro(2:end);
+        MuseStruct_macro = MuseStruct_macro(2:end);
+    end  
+    if ipatient == 4 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
+        MuseStruct_micro = MuseStruct_micro(2:end);
+        MuseStruct_macro = MuseStruct_macro(2:end);
+    end
     
     % read LFP data
-    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
+%     [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
     
+    % create 'artefacts' to remove seizures and time from seizures
+    for ipart = 1 : size(MuseStruct_micro,2)
+        
+        % only when seizures are present
+        if isfield(MuseStruct_micro{ipart}.markers,'Crise_Start')
+            if isfield(MuseStruct_micro{ipart}.markers.Crise_Start,'offset')
+                
+                % if no artefact fields exist, create empty ones
+                if ~isfield(MuseStruct_micro{ipart}.markers,'BAD__START__')
+                    MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [];
+                    MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [];
+                    MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [];
+                    
+                    MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [];
+                    MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [];
+                    MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [];
+                end
+                
+                MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [MuseStruct_micro{ipart}.markers.BAD__START__.offset,   MuseStruct_micro{ipart}.markers.Crise_Start.offset];
+                MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [MuseStruct_micro{ipart}.markers.BAD__START__.synctime, MuseStruct_micro{ipart}.markers.Crise_Start.synctime];
+                MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [MuseStruct_micro{ipart}.markers.BAD__START__.clock,    MuseStruct_micro{ipart}.markers.Crise_Start.clock];
+                
+                MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [MuseStruct_micro{ipart}.markers.BAD__END__.offset,     MuseStruct_micro{ipart}.markers.Crise_End.offset];
+                MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [MuseStruct_micro{ipart}.markers.BAD__END__.synctime,   MuseStruct_micro{ipart}.markers.Crise_End.synctime];
+                MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [MuseStruct_micro{ipart}.markers.BAD__END__.clock,      MuseStruct_micro{ipart}.markers.Crise_End.clock];
+            end
+        end       
+    end
     
+    % write data concatinated for SC, and update config with sampleinfo
+    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, false);
+    
+    % create parameter and probe file for spyking circus
+    writeSpykingCircusParameters(config{ipatient});
+        
+    % read raw spike data from SC, and segment into trials
+    [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
+    
+    % read and plot spikerate overview, and get the stats
+    [SpikeRateStats{ipatient}, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(config{ipatient}, SpikeRaw, SpikeTrials, true);
+ 
+
+    
+end
+
+    
+
+d = dir(fullfile(config{ipatient}.circus.outputdir,[config{ipatient}.prefix,'*.GUI']));
+datadir = fullfile(d.folder,d.name);
+
+info = loadKSdir(datadir);
+% plot templates
+figure; plot(info.temps(1:end-info.n_channels_dat,:,1)');
+
+filename = fullfile(d.folder,d.name,'cluster_group.tsv');
+
+[cids, cgs] = readClusterGroupsCSV(filename);
+% cids is length nClusters, the cluster ID numbers
+% cgs is length nClusters, the "cluster group":
+% - 0 = noise
+% - 1 = mua
+% - 2 = good
+% - 3 = unsorted
+
+filename = fullfile(d.folder,d.name,'spike_times.npy');
+[arrayShape, dataType, fortranOrder, littleEndian, totalHeaderLength, npyVersion] = readNPYheader(filename);
+spike_times = readNPY(filename);
+
+filename = fullfile(d.folder,d.name,'spike_templates.npy');
+spike_templates = readNPY(filename);
+
+
+
+
+
+
+
+
+
+
+
+
+
     % TFR
     
 %     fig             = figure;

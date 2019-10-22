@@ -100,13 +100,13 @@ else
     for idir = 1 : size(MuseStruct,2)
         if isfield(MuseStruct{idir},'markers')
             if isfield(MuseStruct{idir}.markers,'BAD__START__')
-                if isfield(MuseStruct{idir}.markers.BAD__START__,'synctime')
+                if isfield(MuseStruct{idir}.markers.BAD__START__,'events')
                     % check if there is an equal amount of start and end markers
                     if size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) == 0
                         fprintf('Great, recovered same number of start and end markers \n')
                         
-                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
-                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
+                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms;      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
+                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples;        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
                         hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames{1}));
                         last_samples        = last_samples + hdr.nSamples;
                         last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;  
@@ -128,8 +128,8 @@ else
                             end
                         end
                         
-                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
-                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
+                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms;      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
+                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples;        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
                         
                         hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames(1).name));
                         last_samples        = last_samples + hdr.nSamples;

@@ -1,4 +1,4 @@
-function [SpikeRaw, SpikeTrials] = readSpykingCircus(cfg,MuseStruct,force)
+function [SpikeRaw, SpikeTrials] = readSpykingCircus_phy(cfg,MuseStruct,force)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -37,9 +37,32 @@ if exist(fname,'file') && force == false
     load(fname,'SpikeRaw','SpikeTrials');
 else
     
+    %%%%% PHY ******
+    
+    d = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'*.GUI']));
+    datadir = fullfile(d.folder,d.name);
+    info = loadKSdir(datadir);
+    
+    filename = fullfile(d.folder,d.name,'cluster_group.tsv'); 
+    [cids, cgs] = readClusterGroupsCSV(filename);
+    % cids is length nClusters, the cluster ID numbers
+    % cgs is length nClusters, the "cluster group":
+    % - 0 = noise
+    % - 1 = mua
+    % - 2 = good
+    % - 3 = unsorted
+    
+    [arrayShape, dataType, fortranOrder, littleEndian, totalHeaderLength, npyVersion] = readNPYheader(fullfile(d.folder,d.name,'spike_times.npy'));
+    
+    spiketimes_indx     = readNPY(fullfile(d.folder,d.name,'spike_times.npy'));
+    clusternr           = readNPY(fullfile(d.folder,d.name,'spike_templates.npy'));
+    
+    %%%%%%%%%%%%%%%%%%%%
+
+    
     % find spiking-circus output path, which is based on the name of the
     % first datafile
-    temp = dir(fullfile(cfg.datasavedir,cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
+    temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
     if isempty(temp)
         fprintf('Could not find Spyking-Circus results: %s\n',fullfile(cfg.datasavedir,cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
         return
@@ -54,29 +77,14 @@ else
     end
     fname_templates = fullfile(temp.folder,temp.name);
     
+       
     % load spiking data
     if exist(fname_spikes,'file')
-        fprintf('Loading spike data from: %s\n',fname_spikes);
+        fprintf('Loading header data from: %s\n',fname_spikes);
         datinfo     = h5info(fname_spikes);
         temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
         hdr_fname   = fullfile(temp(1).folder,temp(1).name);
         hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
-        %         timestamps  = ft_read_data(fullfile(temp(1).folder,temp(1).name),'timestamp','true');  % take the first concatinated file to extract the timestamps
-%         timestamps  =  (0:hdr.nSamples-1) * hdr.TimeStampPerSample; % calculate timemstamps myself, as this is much faster
-        
-        % read spiketimes of clusters
-        for i = 1 : size(datinfo.Groups,1)
-            names(i) = string(datinfo.Groups(i).Name);
-            if strfind(names(i),'spiketimes')
-                spiketimes_indx = i;
-            end
-        end
-        
-        for i = 1 : size(datinfo.Groups(spiketimes_indx).Datasets,1) % number of templates
-            SpikeRaw.label{i} = datinfo.Groups(spiketimes_indx).Datasets(i).Name;
-            temp = strsplit(SpikeRaw.label{i},'_');
-            clusternr(i) = str2double(temp{2});
-        end
         
         for i = 1:numel(clusternr)
             % read spike timings (in seconds)

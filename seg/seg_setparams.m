@@ -3,16 +3,52 @@
 
 function [config] = seg_setparams(config)
 
+if ismac
+    error('Platform not supported')
+elseif isunix
+    rootpath_analysis   = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh';
+    rootpath_data       = '/network/lustre/iss01/epimicro/patients/raw';
+    os                  = 'unix'; 
+elseif ispc
+    rootpath_analysis	= '\\lexport\iss01.charpier\analyses\stephen.whitmarsh';
+    rootpath_data       = '\\lexport\iss01.epimicro\patients\raw';
+    os                  = 'windows';
+else
+    error('Platform not supported')
+end
+
+% Patient 1, perivetricular heterotopia #1
 disp('setting parameters');
 
 % patient 1
-config{1}.prefix                    = 'seg_2599_';                                                                  % unique prefix for outputfiles to keep things organized
-config{1}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/seg';         % where to write data
-config{1}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/seg';       % where to print images
-config{1}.rawdir                    = '/network/lustre/iss01/epimicro/patients/raw/pat_02599_1057/eeg/';            % where is the original data
-config{1}.labels.macro              = {'_HaT2_1'};                                                                  % at least one macro for calculating sample rate etc.
-config{1}.labels.micro              = {'mHaT2_1'};                                                                  % at least one micro for calculating sample rate etc.
-config{1}.directory_searchstring    = '*';
+config{1}.os                        = os;
+config{1}.prefix                    = 'P1-';
+config{1}.name                      = {'Crise'};
+config{1}.muse.startend             = {'CriseStart','CriseEnd'};   % start and end Muse marker
+config{1}.patientdir                = fullfile(rootpath_data, 'pat_02599_1057');
+config{1}.rawdir                    = fullfile(rootpath_data, 'pat_02599_1057', 'eeg');
+config{1}.datasavedir               = fullfile(rootpath_analysis, 'data',   'seg');         % where to write data
+config{1}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'seg');       % where to print images
+config{1}.labels.macro              = {'_HaT2_6'};                                                                  % at least one macro for calculating sample rate etc.
+config{1}.labels.micro              = {'mHaT2_6'};                                                                  % at least one micro for calculating sample rate etc.
+% config{1}.directory_searchstring    = '*';
+config{1}.directorylist{1}          = {'02599_2018-04-24_18-36',...
+                                       '02599_2018-04-24_20-36'};                                   
+config{1}.directorylist{2}          = {'02599_2018-04-25_11-24',...
+                                       '02599_2018-04-25_13-24'};                                   
+config{1}.directorylist{3}          = {'02599_2018-04-25_13-24',...
+                                       '02599_2018-04-25_15-24'};                                   
+config{1}.directorylist{4}          = {'02599_2018-04-27_13-23',...
+                                       '02599_2018-04-27_15-23'};                                
+config{1}.directorylist{5}          = {'02599_2018-04-28_13-23',...
+                                       '02599_2018-04-27_15-23'};
+                                   
+config{1}.circus.channel            = {'mHaT2_6'};
+config{1}.circus.reref              = 'no';
+config{1}.circus.refchan            = 'xxx';
+config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'seg', 'SpykingCircus');
+config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+
 
 % patient 2
 config{2}.prefix                    = 'seg_2256_';

@@ -4,7 +4,7 @@ fname_params_default        = 'SpykingCircusDefaultSettings.params'; % in path, 
 
 for ipart = 1 : size(cfg.directorylist,2)
     
-    [~, temp]               = fileparts(cfg.fnames_ncs{1});
+    [~, temp]               = fileparts(cfg.fnames_ncs{ipart}{1});
     fname_params_patient    = fullfile(cfg.datasavedir,[temp,'.params']);
     fname_prb               = fullfile(cfg.datasavedir,[temp,'.prb']);
     

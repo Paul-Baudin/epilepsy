@@ -5,6 +5,9 @@ MuseStruct = MuseStruct(~cellfun('isempty',MuseStruct));
 MuseStruct_append = []; %rmfield(MuseStruct{1},'filenames');
 MuseStruct_append.markers = [];
 
+
+%% Deal with differnt parts
+
 % adding next directories
 for idir = 1 : size(MuseStruct,2)
     fprintf('Working on directory %d of %d\n',idir,size(MuseStruct,2));

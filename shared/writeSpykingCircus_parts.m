@@ -1,9 +1,9 @@
 function cfg = writeSpykingCircus_parts(cfg, MuseStruct, force)
 
-fname_output = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_trialinfo.mat']);
+fname_output = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_trialinfo_parts.mat']);
 
 if exist(fname_output,'file') && force == false
-    fprintf('Loading trialinfo: %s \n',fname_output);
+    fprintf('\nLoading trialinfo: %s \n',fname_output);
     temp = load(fname_output,'cfg');
     cfg.sampleinfo          = temp.cfg.sampleinfo;
     cfg.deadfile_ms         = temp.cfg.deadfile_ms;
@@ -15,6 +15,7 @@ else
     % loop through different parts
     for ipart = 1 : size(MuseStruct,2)
         
+        fprintf('\n*** Starting on part %d ***\n',ipart)
         % process channels separately
         for ichan = 1 : size(cfg.circus.channel,2)
             
@@ -24,6 +25,7 @@ else
                 temp                      = dir(fullfile(MuseStruct{ipart}{idir}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
                 cfgtemp                   = [];
                 cfgtemp.dataset           = fullfile(MuseStruct{ipart}{idir}.directory, temp.name);
+                fprintf('LOADING %s\n',cfgtemp.dataset);
                 dirdat{idir}              = ft_preprocessing(cfgtemp);
                 
                 if strcmp(cfg.circus.reref,'yes')
@@ -45,7 +47,7 @@ else
                 end
                 
                 % truncate label to make them equal over files
-                dirdat{idir}.label{1}     = dirdat{idir}.label{1}(end-6:end);
+                dirdat{idir}.label{1}     = dirdat{idir}.label{1}(end-6:end); % can be replaced by circus.channel
                 
                 % save sampleinfo to reconstruct data again after reading SC
                 cfg.sampleinfo(idir,:)    = dirdat{idir}.sampleinfo;
@@ -138,11 +140,11 @@ else
             end
             dirlist{ipart} = [dirlist{ipart}; MuseStruct{ipart}{idir}.directory];
             fprintf('%d\n',idir);
-        end
+        end % ipart
         
         % return info
-        cfg.deadfile_ms{ipart}         = deadfile_ms{ipart};
-        cfg.deadfile_samples{ipart}    = deadfile_samples{ipart};
+        cfg.deadfile_ms{ipart}         = deadfile_ms;
+        cfg.deadfile_samples{ipart}    = deadfile_samples;
         
         % write artefacts to txt file for spyking circus
         filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_ms.dead']);
@@ -155,7 +157,7 @@ else
         
         filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_dirlist.txt']);
         fprintf('Writing list of directories for Spyking-Circus to: %s\n',filename);
-        dlmwrite(filename,dirlist);
+        dlmwrite(filename,dirlist{ipart});
         
         fid = fopen(filename,'w+');
         for r=1:size(dirlist,1)

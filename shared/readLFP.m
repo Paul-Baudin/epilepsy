@@ -53,8 +53,8 @@ else
         
         hasmarker_micro = zeros(length(MuseStruct_micro),1);
         hasmarker_macro = zeros(length(MuseStruct_macro),1);
-        
-        for idir = 1:length(MuseStruct_micro)
+                   
+        for idir = 1:length(MuseStruct_micro{ipart})
             if isfield(MuseStruct_micro{idir},'markers')
                 if isfield(MuseStruct_micro{idir}.markers,(cfg.muse.startend{imarker,1}))
                     if ~isempty(MuseStruct_micro{idir}.markers.(cfg.muse.startend{imarker,1}).events)
@@ -283,12 +283,12 @@ else
         end % idir
         
         % concatinate data over trials
-        dat_macro{imarker} = ft_appenddata([],dirdat_macro{find(hasmarker_macro)});
-        dat_micro{imarker} = ft_appenddata([],dirdat_micro{find(hasmarker_micro)});
+        dat_macro{ipart}{imarker} = ft_appenddata([],dirdat_macro{find(hasmarker_macro)});
+        dat_micro{ipart}{imarker} = ft_appenddata([],dirdat_micro{find(hasmarker_micro)});
         
         % add samplerate
-        dat_micro{imarker}.fsample = cfg.LFP.resamplefs;
-        dat_macro{imarker}.fsample = cfg.LFP.resamplefs;
+        dat_micro{ipart}{imarker}.fsample = cfg.LFP.resamplefs;
+        dat_macro{ipart}{imarker}.fsample = cfg.LFP.resamplefs;
         
         clear dirdat*
         

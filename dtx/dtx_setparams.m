@@ -6,14 +6,28 @@ function [config] = dtx_setparams(config)
 disp('setting parameters');
 muscale = 50; % multiunit scale
 
+if ismac
+    error('Platform not supported')
+elseif isunix
+    rootpath_analysis   = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh';
+    rootpath_data       = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/';
+    os                  = 'unix'; 
+elseif ispc
+    rootpath_analysis	= '\\lexport\iss01.charpier\analyses\stephen.whitmarsh';
+    rootpath_data       = '\\lexport\iss01.epimicro\rodents\raw\DTX-raw\';
+    os                  = 'windows';
+else
+    error('Platform not supported')
+end
 
 % Rodent 1
+config{1}.os                        = os;
 config{1}.name                      = { 'SlowWave','Crise','Injection'};
 config{1}.prefix                    = 'DTX5-';
-config{1}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{1}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX5-M1-10uM/2019_03_19_DTX-5';
-config{1}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{1}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{1}.muse.startend             = { 'SlowWave','SlowWave';'Crise_start','Crise_end';'Injection','Injection'};   % start and end Muse marker
+config{1}.rawdir                    = fullfile(rootpath_data, 'DTX5-M1-10uM', '2019_03_19_DTX-5');
+config{1}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{1}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{1}.directory_searchstring    = '2019*';
 config{1}.labels.micro              = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{1}.labels.macro              = {'E07LFP','E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP'};
@@ -36,17 +50,25 @@ config{1}.LFP.resamplefs            = 1000;
 config{1}.LFP.baseline              = 'yes';
 config{1}.LFP.baselinewindow{1}     = [-2, -1];
 config{1}.LFP.slidestep             = 0.01;
-config{1}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
+config{1}.epoch.toi{1}              = [-5,  25];           
+config{1}.epoch.toi{2}              = [-5,  1];                                                                  % list of onset timing with respect to start-marker (s)
+config{1}.epoch.toi{3}              = [-10,  10];                                                                  % list of onset timing with respect to start-marker (s)
+% list of onset timing with respect tostart-marker (s)
 config{1}.epoch.pad                 = 0.5;
-
+config{1}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{1}.circus.reref              = 'no';
+config{1}.circus.refchan            = '';
+config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 % Rodent 2
+config{2}.os                        = os;
 config{2}.name                      = { 'SlowWave','Crise','Injection'};
 config{2}.prefix                    = 'DTX2-';
 config{2}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{2}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX2-M1-10uM/2019_03_01_DTX-2/';
-config{2}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{2}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{2}.rawdir                    = fullfile(rootpath_data, 'DTX2-M1-10uM', '2019_03_01_DTX-2');
+config{2}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{2}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{2}.directory_searchstring    = '2019*';
 config{2}.labels.micro              = {'E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{2}.labels.macro              = {'E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP','E16LFP'};
@@ -71,15 +93,20 @@ config{2}.LFP.baselinewindow{1}     = [-2, -1];
 config{2}.LFP.slidestep             = 0.01;
 config{2}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
 config{2}.epoch.pad                 = 0.5;
-
+config{2}.circus.channel            = {'E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{2}.circus.reref              = 'no';
+config{2}.circus.refchan            = '';
+config{2}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{2}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 % Rodent 3
+config{3}.os                        = os;
 config{3}.name                      = { 'SlowWave','Crise','Injection'};
 config{3}.prefix                    = 'DTX4-';
 config{3}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{3}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX4-M1-10uM/2019_03_08_DTX-4/';
-config{3}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{3}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{3}.rawdir                    = fullfile(rootpath_data, 'DTX4-M1-10uM', '2019_03_08_DTX-4');
+config{3}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{3}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{3}.directory_searchstring    = '2019*';
 config{3}.labels.micro              = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{3}.labels.macro              = {'E07LFP','E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP','E16LFP'};
@@ -104,15 +131,20 @@ config{3}.LFP.baselinewindow{1}     = [-2, -1];
 config{3}.LFP.slidestep             = 0.01;
 config{3}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
 config{3}.epoch.pad                 = 0.5;
-
+config{3}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{3}.circus.reref              = 'no';
+config{3}.circus.refchan            = '';
+config{3}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{3}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 % Rodent 4
+config{4}.os                        = os;
 config{4}.name                      = { 'SlowWave','Crise','Injection'};
 config{4}.prefix                    = 'DTX10-';
 config{4}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{4}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX10-M1-10uM/2019_03_28_DTX-10/';
-config{4}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{4}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{4}.rawdir                    = fullfile(rootpath_data, 'DTX10-M1-10uM', '2019_03_28_DTX-10');
+config{4}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{4}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{4}.directory_searchstring    = '2019*';
 config{4}.labels.micro              = {'E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{4}.labels.macro              = {'E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP','E16LFP'};
@@ -137,15 +169,20 @@ config{4}.LFP.baselinewindow{1}     = [-2, -1];
 config{4}.LFP.slidestep             = 0.01;
 config{4}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
 config{4}.epoch.pad                 = 0.5;
-
+config{4}.circus.channel            = {'E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{4}.circus.reref              = 'no';
+config{4}.circus.refchan            = '';
+config{4}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{4}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 % Rodent 5
+config{5}.os                        = os;
 config{5}.name                      = { 'SlowWave','Crise','Injection'};
 config{5}.prefix                    = 'DTX7-';
 config{5}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{5}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX7-M1-10uM/2019_03_22_DTX-7/';
-config{5}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{5}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{5}.rawdir                    = fullfile(rootpath_data, 'DTX7-M1-10uM', '2019_03_22_DTX-7');
+config{5}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{5}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{5}.directory_searchstring    = '2019*';
 config{5}.labels.micro              = {'E06','E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{5}.labels.macro              = {'E06LFP','E07LFP','E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP','E16LFP'};
@@ -170,16 +207,20 @@ config{5}.LFP.baselinewindow{1}     = [-2, -1];
 config{5}.LFP.slidestep             = 0.01;
 config{5}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
 config{5}.epoch.pad                 = 0.5;
-
-
+config{5}.circus.channel            = {'E06','E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{5}.circus.reref              = 'no';
+config{5}.circus.refchan            = '';
+config{5}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{5}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 % Rodent 6
+config{6}.os                        = os;
 config{6}.name                      = { 'SlowWave','Crise','Injection'};
 config{6}.prefix                    = 'DTX6-';
 config{6}.muse.startend             = { 'SlowWave','SlowWave';'Crise_Start','Crise_End';'Injection','Injection'};   % start and end Muse marker
-config{6}.rawdir                    = '/network/lustre/iss01/epimicro/rodents/raw/DTX-raw/DTX6-M1-10uM/2019_03_21_DTX-6/';
-config{6}.datasavedir               = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/data/dtx';         % where to write data
-config{6}.imagesavedir              = '/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/images/dtx';       % where to print images
+config{6}.rawdir                    = fullfile(rootpath_data, 'DTX6-M1-10uM', '2019_03_21_DTX-6');
+config{6}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
+config{6}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
 config{6}.directory_searchstring    = '2019*';
 config{6}.labels.micro              = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{6}.labels.macro              = {'E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP','E16LFP'};
@@ -204,12 +245,11 @@ config{6}.LFP.baselinewindow{1}     = [-2, -1];
 config{6}.LFP.slidestep             = 0.01;
 config{6}.epoch.toi                 = {[-5,  25]};                                                                  % list of onset timing with respect to start-marker (s)
 config{6}.epoch.pad                 = 0.5;
-
-
-
-
-
-
+config{6}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
+config{6}.circus.reref              = 'no';
+config{6}.circus.refchan            = '';
+config{6}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
+config{6}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 
 end
 

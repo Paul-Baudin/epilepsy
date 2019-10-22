@@ -10,6 +10,10 @@ addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/scripts/epilep
 addpath /network/lustre/iss01/charpier/analyses/stephen.whitmarsh/fieldtrip/
 ft_defaults
 
+addpath Z:/scripts/epilepsy/hspike/
+addpath Z:/scripts/epilepsy/shared/
+addpath Z:/fieldtrip/
+ft_defaults
 
 % addpath /network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshEpilepsy/mlib6/
 % addpath /network/lustre/iss01/charpier/stephen.whitmarsh/WhitmarshEpilepsy/subaxis/
@@ -29,21 +33,38 @@ for ipatient = 1
     export_hypnogram(config{ipatient});
 
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, false);
+    [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, true);
        
-    % plot hypnogram
-    plotHypnogram(config{ipatient},MuseStruct_micro)
+    % plot hypnogram (use readmusemarkers without parts before)
+%     [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers(config{ipatient}, false);   
+%     plotHypnogram(config{ipatient},MuseStruct_micro)
+    
+    % align data
     
     % read LFP data
-    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
+    [dat_micro, dat_macro] = readLFP_parts(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
     
     % write data concatinated for SC, and update config with sampleinfo
-    config{ipatient} = writeSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true);
+    config{ipatient} = writeSpykingCircus_parts(config{ipatient}, MuseStruct_micro, false);
     
-    % write parameters for spyking-circus
-    writeSpykingCircusParameters_parts(config{ipatient});
+    % write parameterse of SC 
+    config{ipatient}.fnames_ncs{1}{1} = 'P1-p1-multifile-mHaT2_1';
+    config{ipatient}.fnames_ncs{1}{2} = 'P1-p1-multifile-mHaT2_3';
+    config{ipatient}.fnames_ncs{1}{3} = 'P1-p1-multifile-mHaT2_4';
+    config{ipatient}.fnames_ncs{1}{4} = 'P1-p1-multifile-mHaT2_6';
+    config{ipatient}.fnames_ncs{1}{5} = 'P1-p1-multifile-mHaT2_8';   
+    
+    config{ipatient}.fnames_ncs{2}{1} = 'P1-p2-multifile-mHaT2_1';
+    config{ipatient}.fnames_ncs{2}{2} = 'P1-p2-multifile-mHaT2_3';
+    config{ipatient}.fnames_ncs{2}{3} = 'P1-p2-multifile-mHaT2_4';
+    config{ipatient}.fnames_ncs{2}{4} = 'P1-p2-multifile-mHaT2_6';
+    config{ipatient}.fnames_ncs{2}{5} = 'P1-p2-multifile-mHaT2_8';    
+    
+    writeSpykingCircusParameters_parts(config{ipatient})
     
     
+    [SpikeRaw, SpikeTrials] = readSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true);
+  
     
     
     
