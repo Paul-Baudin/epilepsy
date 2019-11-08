@@ -24,7 +24,7 @@ end
 
 h1 = ini.SetValues('data', {'file_format','stream_mode','mapping','suffix','overwrite','output_dir','ncs_pattern'}, {'neuralynx','None',[cfg.prefix,'SpykingCircus.prb'],cfg.prefix,'False','SpykingCircus',''});
 h2 = ini.SetValues('noedits', {'filter_done','artefacts_done','ground_done','median_done'}, {'False','False','False','False'});
-h3 = ini.SetValues('triggers', {'dead_file','dead_unit','ignore_times'}, {[cfg.prefix,'SpykingCircus_artefacts_ms.dead'],'timestep','True'});
+h3 = ini.SetValues('triggers', {'dead_file','dead_unit','ignore_times'}, {[cfg.prefix,'SpykingCircus_artefacts_samples.dead'],'timestep','True'});
 if any([h1; h2; h3] ~= 1), error('Something went wrong with adjusting parameters'); end
 
 ini.WriteFile(fname_params_patient);
@@ -52,32 +52,3 @@ fprintf(fid,"\t\t'graph' : []\n");
 fprintf(fid,"\t}\n");
 fprintf(fid,"}\n");
 fclose(fid);
-
-
-
-
-
-
-
-
-
-
-% 
-% total_nb_channels   = 5;
-% radius              = 150;
-% 
-% channel_groups = {
-%     1: {
-%         'channels':range(0,5),
-%         'geometry': {
-%                    0: [0, 10],
-%                    1: [0, 310],
-%                    2: [0, 620],
-%                    3: [0, 930],
-%                    4: [0, 1240],
-%         },
-%         'graph' : []
-%     }
-% }
-
-

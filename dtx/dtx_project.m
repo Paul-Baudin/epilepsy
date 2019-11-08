@@ -59,7 +59,7 @@ for ipatient = 1:6
     end
     
     % read LFP data
-%     [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
+   [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
     
     % create 'artefacts' to remove seizures and time from seizures
     for ipart = 1 : size(MuseStruct_micro,2)
@@ -90,15 +90,17 @@ for ipatient = 1:6
         end       
     end
     
-    % write data concatinated for SC, and update config with sampleinfo
-    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, false);
+    % write data concatinated for SC, and update config with sampleinfo;
+    % reload, rewrite
+    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, false, false);
     
     % create parameter and probe file for spyking circus
     writeSpykingCircusParameters(config{ipatient});
         
-    % read raw spike data from SC, and segment into trials
-    [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
-    
+    % read raw spike data from SC, and segment into trials, requires 
+%     [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
+    [SpikeRaw, SpikeTrials]                 = readSpykingCircus(config{ipatient}, MuseStruct_micro, true);
+
     % read and plot spikerate overview, and get the stats
     [SpikeRateStats{ipatient}, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(config{ipatient}, SpikeRaw, SpikeTrials, true);
  

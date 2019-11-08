@@ -39,15 +39,18 @@ else
     
     % find spiking-circus output path, which is based on the name of the
     % first datafile
-    temp = dir(fullfile(cfg.datasavedir,cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
+
+    temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.result.hdf5']));
+
     if isempty(temp)
         fprintf('Could not find Spyking-Circus results: %s\n',fullfile(cfg.datasavedir,cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
         return
     else
         fname_spikes = fullfile(temp.folder,temp.name);
     end
-    
-    temp = dir(fullfile(cfg.datasavedir,'SpykingCircus',[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.templates',cfg.circus.suffix,'.hdf5']));
+%     temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.templates',cfg.circus.suffix,'.hdf5']));
+
+    temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.templates.hdf5']));
     if isempty(temp)
         fprintf('Could not find Spyking-Circus templates: %s\n',fullfile(cfg.datasavedir,'SpykingCircus',[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.templates.hdf5']));
         return
@@ -58,7 +61,7 @@ else
     if exist(fname_spikes,'file')
         fprintf('Loading spike data from: %s\n',fname_spikes);
         datinfo     = h5info(fname_spikes);
-        temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
+        temp = dir(fullfile(cfg.datasavedir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.ncs']));
         hdr_fname   = fullfile(temp(1).folder,temp(1).name);
         hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
         %         timestamps  = ft_read_data(fullfile(temp(1).folder,temp(1).name),'timestamp','true');  % take the first concatinated file to extract the timestamps
@@ -89,7 +92,7 @@ else
             
             % map samplenrs onto timestamps
 %             SpikeRaw.timestamp{i} = timestamps(SpikeRaw.samples{i});
-            SpikeRaw.timestamp{i} = SpikeRaw.samples{i} * hdr.TimeStampPerSample + double(hdr.FirstTimeStamp);         
+            SpikeRaw.timestamp{i} = int64(SpikeRaw.samples{i}) * int64(hdr.TimeStampPerSample) + int64(hdr.FirstTimeStamp);         
         end
         
         % load templates
@@ -110,6 +113,20 @@ else
         end
         
         
+        % capitalize all markernames
+        for idir = 1 : size(MuseStruct,2)
+            markernames_old = fields(MuseStruct{idir}.markers);
+            markernames_new = upper(markernames_old);
+            for i = 1 : size(markernames_old,1)
+                MuseStruct{idir}.markers.(markernames_new{i}) = MuseStruct{idir}.markers.(markernames_old{i});
+                MuseStruct{idir}.markers = rmfield(MuseStruct{idir}.markers,markernames_old{i});
+            end
+        end
+        for ilabel = 1 : size(cfg.name,2) 
+            cfg.muse.startend{ilabel,1} = upper(cfg.muse.startend{ilabel,1});
+            cfg.muse.startend{ilabel,2} = upper(cfg.muse.startend{ilabel,2});
+        end
+        
         clear Trials
         for ilabel = 1 : size(cfg.name,2)
             
@@ -122,7 +139,8 @@ else
                     end
                 end
             end
-            
+
+
             % create Fieldtrip trl based on concatinated files by adding nr of
             % samples of each file
             

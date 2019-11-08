@@ -26,10 +26,13 @@ for ipart = 1 : size(cfg.directorylist,2)
     % adjust parameters
     h1 = ini.SetValues('data', {'file_format','stream_mode','mapping','suffix','overwrite','output_dir','ncs_pattern'}, {'neuralynx','None',fname_prb,'','False','SpykingCircus',cfg.prefix});
     h2 = ini.SetValues('noedits', {'filter_done','artefacts_done','ground_done','median_done'}, {'False','False','False','False'});
-    h3 = ini.SetValues('triggers', {'dead_file','dead_unit','ignore_times'}, {[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_ms.dead'],'timestep','True'});
+    h3 = ini.SetValues('triggers', {'dead_file','dead_unit','ignore_times'}, {[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_samples.dead'],'timestep','True'});
     if any([h1; h2; h3] ~= 1), error('Something went wrong with adjusting parameters'); end
     
-    ini.WriteFile(fname_params_patient);
+    status = ini.WriteFile(fname_params_patient);
+    if ~status 
+        error('Couldn''t write file');
+    end
     ini.ToString()
     
     % write params file 

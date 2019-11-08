@@ -34,11 +34,11 @@ for ipatient =  1 : 3
     [MuseStruct_micro, MuseStruct_macro]    = MuseMarkers_update_filepath(config{ipatient},MuseStruct_micro, MuseStruct_macro);
     
 %     % read LFP data
-%     [dat_micro, dat_macro] = readLFP(config{ipatient},MuseStruct_micro, MuseStruct_macro, false);
+    [dat_micro, dat_macro] = readLFP(config{ipatient},MuseStruct_micro, MuseStruct_macro, false);
 %     
 %     % plot LFP timecourse examples for article
 %     plotTimeCourses(config{ipatient});
-%     
+%     )
 %     % plot LFP data
 %     [FFT_micro_trials,TFR_micro_trials,TFR_macro_trials,stat_TFR_micro] = plotLFP(config{ipatient}, dat_micro, dat_macro, true);
 %     

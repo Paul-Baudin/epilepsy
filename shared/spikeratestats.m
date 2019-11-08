@@ -1,13 +1,18 @@
 
 
-function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force)
+function [stats, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(cfg,SpikeRaw,SpikeTrials,force,varargin)
+
+if ~isempty(varargin)
+    cfg.prefix = [cfg.prefix,'p',num2str(varargin{1}),'-'];
+end
 
 fname = fullfile(cfg.datasavedir,[cfg.prefix,'all_data_spikedata_stats.mat']);
 if exist(fname,'file') && force == false
     load(fname,'stats','stats_bar','sdf_orig_out','sdf_bar_out');
 else
     
-    temp                = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
+    % fix this for consistency
+    temp                = dir(fullfile(cfg.datasavedir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.ncs']));
     hdr_fname           = fullfile(temp(1).folder,temp(1).name);
     hdr                 = ft_read_header(hdr_fname); % take the first file to extract the header of the data
     
@@ -16,14 +21,15 @@ else
     cfgtemp.trl         = (1 : hdr.Fs : hdr.nSamples)';
     cfgtemp.trl(:,2)    = cfgtemp.trl(:,1) + hdr.Fs;
     cfgtemp.trl(:,3)    = zeros(size(cfgtemp.trl,1),1);
-    cfgtemp.trl         = cfgtemp.trl(1:end-1,:);
+    cfgtemp.trl         = cfgtemp.trl(1:end-1,:);   
+    cfgtemp.trl         = cfgtemp.trl(randi(size(cfgtemp.trl,1),1000,1),:);    % select a subsection, to reduce memoryload
     cfgtemp.trlunit     = 'samples';
     cfgtemp.hdr         = hdr;
     spiketrials_1s      = ft_spike_maketrials(cfgtemp,SpikeRaw);
     
     % ISI over 1-second windows
     cfgtemp                         = [];
-    cfgtemp.outputunit              = 'spikecount';
+    cfgtemp.outputunit              = 'proportion';
     cfgtemp.bins                    = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
     cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
     stats.isi_1s                    = ft_spike_isi(cfgtemp,spiketrials_1s);
@@ -31,9 +37,8 @@ else
 %     RPV = (length(find(ISI < 2)) / length(ISI)) * 100
     
     % plot ISI for each templates of 1-sec windows
-    nrtemplates =  size(stats.isi_1s.label,2);
+    nrtemplates =  size(SpikeRaw.label,2);
 
-    
     fig = figure; hold;
     for itemp = 1 : nrtemplates
         % plot ISI fo 1-second windows
@@ -59,17 +64,17 @@ else
     
     % do my own way of creating ISI    
     for itemp = 1 : nrtemplates
-        stats.isi{itemp} = diff(SpikeRaw.samples{itemp}) / hdr.Fs * 1000;
+        stats.isi{itemp} = diff(double(SpikeRaw.samples{itemp})) / hdr.Fs * 1000;
     end
     
-    fig = figure; hold;
+    fig = figure; hold
     for itemp = 1 : nrtemplates
         % plot ISI fo 1-second windows
         subplot(round(nrtemplates/2+0.25),2,itemp);
         histogram(stats.isi{itemp},'BinWidth',0.5,'BinLimits',[0,15]);
 %         bar(stats.isi_1s.time*1000,stats.isi_1s.avg(itemp,:),1);
-        [y,indx] = max(stats.isi_1s.avg(itemp,:));
-        title(sprintf('Unit: %d, Max ISI: %.1fms',itemp,stats.isi_1s.time(indx)*1000));
+        [y,indx] = max(stats.isi{itemp});
+        title(sprintf('Unit: %d, Max ISI: %.1fms',itemp,stats.isi{itemp}(indx)));
         xlabel('ms');
 %         xticks(stats.isi_1s.time*1000);
         xtickangle(90);
@@ -85,75 +90,76 @@ else
     set(fig,'PaperPosition', [0 0 1 1]);
     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'ISI_own.pdf']),'-r600');
     
-    % cross-correlation between template (over 1 second trials)
-    cfgtemp             = [];
-    cfgtemp.binsize     = 0.0005;
-    cfgtemp.maxlag      = 0.015;
-    cfgtemp.debias      = 'yes';
-    cfgtemp.method      = 'xcorr';
-    stats.xcorr         = ft_spike_xcorr(cfgtemp,spiketrials_1s);
-    
-    % plot xcorr
-    fig = figure;
-    set(fig, 'units','normalized','position', [0 0 1 0.5]);
-    i = 1;
-    for ix = 1 : size(stats.xcorr.xcorr,1)
-        for iy = 1 : size(stats.xcorr.xcorr,2)
-            
-            if ix > iy
-                c = [0 0 0];
-            end
-            
-            if ix < iy
-                c = [0 0 0];
-            end
-            
-            if ix == iy
-                c = [0 0 0.8];
-            end
-            
-            x = stats.xcorr.time;
-            y = squeeze(stats.xcorr.xcorr(ix,iy,:));
-            if ~any(isnan(y))
-                
-                h = subplot(size(stats.xcorr.xcorr,1),size(stats.xcorr.xcorr,2),i);
-                hold;
-                
-                Lx = 1:length(x)/2;
-                Rx = length(x)/2 : length(x);
-                
-                xintL = linspace(x(Lx(1)),x(Lx(end)),100)';
-                yintL = spline(x(Lx),y(Lx),xintL);
-                yintL = smooth1q(yintL,10);
-                
-                xintR = linspace(x(Rx(1)),x(Rx(end)),100)';
-                yintR = spline(x(Rx),y(Rx),xintR);
-                yintR = smooth1q(yintR,10);
-                
-                
-                bar(x,y);
-                plot(xintL,yintL,'r','linewidth',1);
-                plot(xintR,yintR,'r','linewidth',1);
-                axis tight
-                ax = axis;
-                ylim([0,ax(4)]);
-                set(h,'yticklabel',{[]});
-                t = sprintf('%dx%d',ix,iy);
-                title(t);
-                pbaspect([1 1 1])
-                grid on
-            end
-            i = i + 1;
-        end
-    end
-    
-    % print to file
-    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
-    set(fig,'PaperOrientation','landscape');
-    set(fig,'PaperUnits','normalized');
-    set(fig,'PaperPosition', [0 0 1 1]);
-    print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'xcorr_1s_windows.pdf']),'-r600');
-    
+%     % cross-correlation between template (over 1 second trials)
+%     % FIXME probably better to do it myself over the whole timecourse
+%     cfgtemp             = [];
+%     cfgtemp.binsize     = 0.0005;
+%     cfgtemp.maxlag      = 0.015;
+%     cfgtemp.debias      = 'yes';
+%     cfgtemp.method      = 'xcorr';
+%     stats.xcorr         = ft_spike_xcorr(cfgtemp,spiketrials_1s);
+%     
+%     % plot xcorr
+%     fig = figure;
+%     set(fig, 'units','normalized','position', [0 0 1 0.5]);
+%     i = 1;
+%     for ix = 1 : size(stats.xcorr.xcorr,1)
+%         for iy = 1 : size(stats.xcorr.xcorr,2)
+%             
+%             if ix > iy
+%                 c = [0 0 0];
+%             end
+%             
+%             if ix < iy
+%                 c = [0 0 0];
+%             end
+%             
+%             if ix == iy
+%                 c = [0 0 0.8];
+%             end
+%             
+%             x = stats.xcorr.time;
+%             y = squeeze(stats.xcorr.xcorr(ix,iy,:));
+%             if ~any(isnan(y))
+%                 
+%                 h = subplot(size(stats.xcorr.xcorr,1),size(stats.xcorr.xcorr,2),i);
+%                 hold;
+%                 
+%                 Lx = 1:length(x)/2;
+%                 Rx = length(x)/2 : length(x);
+%                 
+%                 xintL = linspace(x(Lx(1)),x(Lx(end)),100)';
+%                 yintL = spline(x(Lx),y(Lx),xintL);
+%                 yintL = smooth1q(yintL,10);
+%                 
+%                 xintR = linspace(x(Rx(1)),x(Rx(end)),100)';
+%                 yintR = spline(x(Rx),y(Rx),xintR);
+%                 yintR = smooth1q(yintR,10);
+%                 
+%                 
+%                 bar(x,y);
+%                 plot(xintL,yintL,'r','linewidth',1);
+%                 plot(xintR,yintR,'r','linewidth',1);
+%                 axis tight
+%                 ax = axis;
+%                 ylim([0,ax(4)]);
+%                 set(h,'yticklabel',{[]});
+%                 t = sprintf('%dx%d',ix,iy);
+%                 title(t);
+%                 pbaspect([1 1 1])
+%                 grid on
+%             end
+%             i = i + 1;
+%         end
+%     end
+%     
+%     % print to file
+%     fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
+%     set(fig,'PaperOrientation','landscape');
+%     set(fig,'PaperUnits','normalized');
+%     set(fig,'PaperPosition', [0 0 1 1]);
+%     print(fig, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'xcorr_1s_windows.pdf']),'-r600');
+%     
     % stats per pattern
     for ilabel = 1 : size(SpikeTrials,2)
         
@@ -473,14 +479,14 @@ else
             cfgtemp                 = [];
             cfgtemp.spikechannel    = itemp;
             cfgtemp.latency         = [cfg.epoch.toi{ilabel}(1), cfg.epoch.toi{ilabel}(2)];
-            cfgtemp.trialborders    = 'no';
+            cfgtemp.trialborders    = 'yes';
             ft_spike_plot_raster(cfgtemp,SpikeTrials{ilabel});
             
             % plot ISI patch in raster
-            ax = axis;
-            patch([-2 -0.15 -0.15 -2],[ax(3) ax(3) ax(4) ax(4)],'b','facealpha',0.2,'edgecolor','none');
-            patch([-0.15 0.15 0.15 -0.15],[ax(3) ax(3) ax(4) ax(4)],'r','facealpha',0.2,'edgecolor','none');
-            
+%             ax = axis;
+%             patch([-2 -0.15 -0.15 -2],[ax(3) ax(3) ax(4) ax(4)],'b','facealpha',0.2,'edgecolor','none');
+%             patch([-0.15 0.15 0.15 -0.15],[ax(3) ax(3) ax(4) ax(4)],'r','facealpha',0.2,'edgecolor','none');
+%             
             % plot ISI
             subplot(3,3,3); hold;
             barh = bar(stats.isi_1s.time*1000,[stats.isi_1s.avg(itemp,:); stats.isi_pattern_all{ilabel}.avg(itemp,:); stats.isi_pattern_bl{ilabel}.avg(itemp,:); stats.isi_pattern_ac{ilabel}.avg(itemp,:);]',1,'grouped','edgecolor','none');
@@ -499,9 +505,9 @@ else
             
             % peak width accoridng to Gast et. al
             subplot(3,3,6); hold;
-            temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
-            hdr_fname   = fullfile(temp(1).folder,temp(1).name);
-            hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
+%             temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
+%             hdr_fname   = fullfile(temp(1).folder,temp(1).name);
+%             hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
             tempsel = squeeze(SpikeRaw.template(itemp,SpikeRaw.template_maxchan(itemp),:));
             temptime = ((1:size(SpikeRaw.template,3))/hdr.Fs*1000)';
             
@@ -531,7 +537,8 @@ else
             
             midline = min(tempsel_int) + (max(tempsel_int) - min(tempsel_int)) / 2 ;
             indx = zci(tempsel_int - midline);
-            plot(temptime_int(indx),[midline, midline],'-o','Color',[0 1 0],'MarkerFaceColor',[0 1 0],'MarkerEdgeColor',[0 1 0]);
+            indx = indx([ceil(length(indx)/2-0.5), ceil(length(indx)/2+0.5)]);
+            plot(temptime_int(indx),ones(1,length(indx))*midline,'-o','Color',[0 1 0],'MarkerFaceColor',[0 1 0],'MarkerEdgeColor',[0 1 0]);
             
             x = sum(temptime_int(indx))/length(indx);
             y = midline*1.1;

@@ -57,7 +57,8 @@ config{1}.directorylist{2}          =  {'02711_2019-04-18_13-04',...
                                         '02711_2019-04-19_07-04',...
                                         '02711_2019-04-19_09-04',...
                                         '02711_2019-04-19_10-00',...
-                                        '02711_2019-04-19_12-00'};                                      
+                                        '02711_2019-04-19_12-00'};        
+                                    
 config{1}.labels.micro              = {'mHaT2_1','mHaT2_3','mHaT2_4','mHaT2_6','mHaT2_8'};
 config{1}.labels.macro              = {'_HaT2_1'};
 
@@ -100,6 +101,7 @@ config{1}.circus.reref              = 'yes';
 config{1}.circus.refchan            = 'mHaT2_2';
 config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'hspike', 'SpykingCircus');
 config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{1}.circus.hpfreq = 0; % even when not using
 
 config{1}.spike.slidestep           = [0.01, 0.01, 0.001];
 config{1}.spike.toispikerate{1}     = [-0.1 0.1];         % for plotting spikerate

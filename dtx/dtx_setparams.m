@@ -22,9 +22,9 @@ end
 
 % Rodent 1
 config{1}.os                        = os;
-config{1}.name                      = { 'SlowWave','Crise','Injection'};
+config{1}.name                      = { 'SlowWave'};
 config{1}.prefix                    = 'DTX5-';
-config{1}.muse.startend             = { 'SlowWave','SlowWave';'Crise_start','Crise_end';'Injection','Injection'};   % start and end Muse marker
+config{1}.muse.startend             = { 'SlowWave','SlowWave'};   % start and end Muse marker
 config{1}.rawdir                    = fullfile(rootpath_data, 'DTX5-M1-10uM', '2019_03_19_DTX-5');
 config{1}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
 config{1}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
@@ -51,8 +51,6 @@ config{1}.LFP.baseline              = 'yes';
 config{1}.LFP.baselinewindow{1}     = [-2, -1];
 config{1}.LFP.slidestep             = 0.01;
 config{1}.epoch.toi{1}              = [-5,  25];           
-config{1}.epoch.toi{2}              = [-5,  1];                                                                  % list of onset timing with respect to start-marker (s)
-config{1}.epoch.toi{3}              = [-10,  10];                                                                  % list of onset timing with respect to start-marker (s)
 % list of onset timing with respect tostart-marker (s)
 config{1}.epoch.pad                 = 0.5;
 config{1}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
@@ -60,6 +58,17 @@ config{1}.circus.reref              = 'no';
 config{1}.circus.refchan            = '';
 config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{1}.circus.suffix             = '';
+config{1}.stats.actoi{1}            = [-4, 25];
+config{1}.stats.bltoi{1}            = [-5, -4];
+config{1}.stats.alpha               = 0.025;
+
+config{1}.spike.slidestep           = [0.01];
+config{1}.spike.toispikerate{1}     = [-0.1 0.1];           % for plotting spikerate
+config{1}.spike.resamplefs          = 1000;
+config{1}.spike.bltoi{1}            = [-5, -4];
+
+
 
 % Rodent 2
 config{2}.os                        = os;
@@ -98,6 +107,13 @@ config{2}.circus.reref              = 'no';
 config{2}.circus.refchan            = '';
 config{2}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{2}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{2}.stats.actoi{1}            = [-10, 3];
+config{2}.stats.actoi{2}            = [-1, 10];
+config{2}.stats.actoi{3}            = [-0.15, 0.15]; 
+config{2}.stats.bltoi{1}            = [-12, -10];
+config{2}.stats.bltoi{2}            = [-2, -1];
+config{2}.stats.bltoi{3}            = [-1,  -0.5];
+config{2}.stats.alpha               = 0.025;
 
 % Rodent 3
 config{3}.os                        = os;
@@ -136,6 +152,13 @@ config{3}.circus.reref              = 'no';
 config{3}.circus.refchan            = '';
 config{3}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{3}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{3}.stats.actoi{1}            = [-10, 3];
+config{3}.stats.actoi{2}            = [-1, 10];
+config{3}.stats.actoi{3}            = [-0.15, 0.15]; 
+config{3}.stats.bltoi{1}            = [-12, -10];
+config{3}.stats.bltoi{2}            = [-2, -1];
+config{3}.stats.bltoi{3}            = [-1,  -0.5];
+config{3}.stats.alpha               = 0.025;
 
 % Rodent 4
 config{4}.os                        = os;
@@ -174,6 +197,13 @@ config{4}.circus.reref              = 'no';
 config{4}.circus.refchan            = '';
 config{4}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{4}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{4}.stats.actoi{1}            = [-10, 3];
+config{4}.stats.actoi{2}            = [-1, 10];
+config{4}.stats.actoi{3}            = [-0.15, 0.15]; 
+config{4}.stats.bltoi{1}            = [-12, -10];
+config{4}.stats.bltoi{2}            = [-2, -1];
+config{4}.stats.bltoi{3}            = [-1,  -0.5];
+config{4}.stats.alpha               = 0.025;
 
 % Rodent 5
 config{5}.os                        = os;
@@ -212,6 +242,13 @@ config{5}.circus.reref              = 'no';
 config{5}.circus.refchan            = '';
 config{5}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{5}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{5}.stats.actoi{1}            = [-10, 3];
+config{5}.stats.actoi{2}            = [-1, 10];
+config{5}.stats.actoi{3}            = [-0.15, 0.15]; 
+config{5}.stats.bltoi{1}            = [-12, -10];
+config{5}.stats.bltoi{2}            = [-2, -1];
+config{5}.stats.bltoi{3}            = [-1,  -0.5];
+config{5}.stats.alpha               = 0.025;
 
 % Rodent 6
 config{6}.os                        = os;
@@ -250,6 +287,13 @@ config{6}.circus.reref              = 'no';
 config{6}.circus.refchan            = '';
 config{6}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{6}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
+config{6}.stats.actoi{1}            = [-10, 3];
+config{6}.stats.actoi{2}            = [-1, 10];
+config{6}.stats.actoi{3}            = [-0.15, 0.15]; 
+config{6}.stats.bltoi{1}            = [-12, -10];
+config{6}.stats.bltoi{2}            = [-2, -1];
+config{6}.stats.bltoi{3}            = [-1,  -0.5];
+config{6}.stats.alpha               = 0.025;
 
 end
 
