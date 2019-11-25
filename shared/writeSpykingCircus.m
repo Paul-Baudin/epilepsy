@@ -45,14 +45,18 @@ else
                 cfgtemp.dataset           = fullfile(MuseStruct{idir}.directory, temp.name);
                 
                 % load data
-                dirdat{idir}              = ft_preprocessing(cfgtemp);
+                fname{1}                  = cfgtemp.dataset;
+                dirdat{idir}              = ft_read_neuralynx_interp(fname);
+                %                 dirdat{idir}              = ft_preprocessing(cfgtemp);
                 
                 % rereference if needed
                 if strcmp(cfg.circus.reref,'yes')
                     temp                      = dir(fullfile(MuseStruct{idir}.directory,['*',cfg.circus.refchan,'.ncs']));
                     cfgtemp                   = [];
                     cfgtemp.dataset           = fullfile(MuseStruct{idir}.directory, temp.name);
-                    refdat                    = ft_preprocessing(cfgtemp);
+                    fname{1}                  = cfgtemp.dataset;
+                    dirdat{idir}              = ft_read_neuralynx_interp(fname);
+                    %                     refdat                    = ft_preprocessing(cfgtemp);
                     dirdat{idir}.trial{1}     = dirdat{idir}.trial{1} - refdat.trial{1};
                     clear refdat
                 end
@@ -94,7 +98,7 @@ else
         temp                        = dir(fullfile(MuseStruct{1}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
         hdrtemp                     = ft_read_header(fullfile(MuseStruct{1}.directory, temp.name));
         fname                       = fullfile(cfg.datasavedir,[cfg.prefix,'multifile-',cfg.labels.micro{ichan},'.ncs']);
-
+        
         % save filenames to cfg (output of function)
         cfg.fnames_ncs{ichan}       = fname;
         
@@ -106,7 +110,7 @@ else
             hdr.nSamplePre              = 0;
             hdr.nChans                  = 1;
             hdr.FirstTimeStamp          = 0;
-            hdr.TimeStampPerSample      = hdr.TimeStampPerSample;
+            hdr.TimeStampPerSample      = hdrtemp.TimeStampPerSample;
             hdr.label                   = chandat.label;
             ft_write_data(fname,chandat.trial{1},'chanindx',1,'dataformat','neuralynx_ncs','header',hdr);
         end
@@ -115,87 +119,87 @@ else
         
     end % ichan
     
-%     if write
-        %% write deadtime
-        deadfile_ms         = [];
-        deadfile_samples    = [];
-        last_ms             = 0;
-        last_samples        = 0;
-        dirlist             = [];
-        
-        for idir = 1 : size(MuseStruct,2)
-            if isfield(MuseStruct{idir},'markers')
-                if isfield(MuseStruct{idir}.markers,'BAD__START__')
-                    if isfield(MuseStruct{idir}.markers.BAD__START__,'events')
-                        % check if there is an equal amount of start and end markers
-                        if size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) == 0
-                            fprintf('Great, recovered same number of start and end markers \n')
-                            
-                            deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
-                            deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
-                            hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames{1}));
-                            last_samples        = last_samples + hdr.nSamples;
-                            last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;
-                        elseif size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) > 0
-                            fprintf('ERROR! more start than end found in %s \n',MuseStruct{idir}.directory);
-                        elseif size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) < 0
-                            fprintf('ERROR! more end than start found in %s - CORRECTING \n',MuseStruct{idir}.directory)
-                            for i = 1 : 10
-                                for itrial = 1 : length(MuseStruct{idir}.markers.BAD__START__.synctime)
-                                    start(itrial) = MuseStruct{idir}.markers.BAD__START__.synctime(itrial);
-                                    stop(itrial)  = MuseStruct{idir}.markers.BAD__END__.synctime(itrial);
-                                end
-                                
-                                x = find(start > stop,1,'first');
-                                if ~isempty(x)
-                                    MuseStruct{idir}.markers.BAD__END__.synctime(x) = [];
-                                    MuseStruct{idir}.markers.BAD__END__.offset(x) = [];
-                                    
-                                end
+    %     if write
+    %% write deadtime
+    deadfile_ms         = [];
+    deadfile_samples    = [];
+    last_ms             = 0;
+    last_samples        = 0;
+    dirlist             = [];
+    
+    for idir = 1 : size(MuseStruct,2)
+        if isfield(MuseStruct{idir},'markers')
+            if isfield(MuseStruct{idir}.markers,'BAD__START__')
+                if isfield(MuseStruct{idir}.markers.BAD__START__,'events')
+                    % check if there is an equal amount of start and end markers
+                    if size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) == 0
+                        fprintf('Great, recovered same number of start and end markers \n')
+                        
+                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
+                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
+                        hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames{1}));
+                        last_samples        = last_samples + hdr.nSamples;
+                        last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;
+                    elseif size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) > 0
+                        fprintf('ERROR! more start than end found in %s \n',MuseStruct{idir}.directory);
+                    elseif size(MuseStruct{idir}.markers.BAD__START__.events,2)-size(MuseStruct{idir}.markers.BAD__END__.events,2) < 0
+                        fprintf('ERROR! more end than start found in %s - CORRECTING \n',MuseStruct{idir}.directory)
+                        for i = 1 : 10
+                            for itrial = 1 : length(MuseStruct{idir}.markers.BAD__START__.synctime)
+                                start(itrial) = MuseStruct{idir}.markers.BAD__START__.synctime(itrial);
+                                stop(itrial)  = MuseStruct{idir}.markers.BAD__END__.synctime(itrial);
                             end
                             
-                            deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
-                            deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
-                            
-                            hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames(1).name));
-                            last_samples        = last_samples + hdr.nSamples;
-                            last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;
+                            x = find(start > stop,1,'first');
+                            if ~isempty(x)
+                                MuseStruct{idir}.markers.BAD__END__.synctime(x) = [];
+                                MuseStruct{idir}.markers.BAD__END__.offset(x) = [];
+                                
+                            end
                         end
-                    else
-                        fprintf('Found no artefacts for file: %s\n',MuseStruct{idir}.directory);
+                        
+                        deadfile_ms         = [deadfile_ms;         MuseStruct{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{idir}.markers.BAD__END__.synctime'*1000+last_ms];
+                        deadfile_samples    = [deadfile_samples;    MuseStruct{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{idir}.markers.BAD__END__.offset'+last_samples];
+                        
+                        hdr                 = ft_read_header(fullfile(MuseStruct{idir}.directory,MuseStruct{idir}.filenames(1).name));
+                        last_samples        = last_samples + hdr.nSamples;
+                        last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;
                     end
                 else
                     fprintf('Found no artefacts for file: %s\n',MuseStruct{idir}.directory);
                 end
+            else
+                fprintf('Found no artefacts for file: %s\n',MuseStruct{idir}.directory);
             end
-            dirlist = [dirlist; MuseStruct{idir}.directory];
-            fprintf('%d\n',idir);
         end
-        
-        % return info
-        cfg.deadfile_ms         = deadfile_ms;
-        cfg.deadfile_samples    = deadfile_samples;
-        
-        % save data
-        save(fname_output,'cfg');
-        
-        % write to analysis directory
-        filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_artefacts_ms.dead']);
-        fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
-        dlmwrite(filename,deadfile_ms,'delimiter','	','precision','%.4f');
-        
-        filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_artefacts_samples.dead']);
-        fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
-        dlmwrite(filename,deadfile_samples,'delimiter','	','precision','%.0f');
-        
-        filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_dirlist.txt']);
-        fprintf('Writing list of directories for Spyking-Circus to: %s\n',filename);
-        dlmwrite(filename,dirlist);
-        
-        fid = fopen(filename,'w+');
-        for r=1:size(dirlist,1)
-            fprintf(fid,'%s\n',dirlist(r,:));
-        end
-        fclose(fid);
-%     end
+        dirlist = [dirlist; MuseStruct{idir}.directory];
+        fprintf('%d\n',idir);
+    end
+    
+    % return info
+    cfg.deadfile_ms         = deadfile_ms;
+    cfg.deadfile_samples    = deadfile_samples;
+    
+    % save data
+    save(fname_output,'cfg');
+    
+    % write to analysis directory
+    filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_artefacts_ms.dead']);
+    fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
+    dlmwrite(filename,deadfile_ms,'delimiter','	','precision','%.4f');
+    
+    filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_artefacts_samples.dead']);
+    fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
+    dlmwrite(filename,deadfile_samples,'delimiter','	','precision','%.0f');
+    
+    filename = fullfile(cfg.datasavedir,[cfg.prefix,'SpykingCircus_dirlist.txt']);
+    fprintf('Writing list of directories for Spyking-Circus to: %s\n',filename);
+    dlmwrite(filename,dirlist);
+    
+    fid = fopen(filename,'w+');
+    for r=1:size(dirlist,1)
+        fprintf(fid,'%s\n',dirlist(r,:));
+    end
+    fclose(fid);
+    %     end
 end

@@ -289,9 +289,9 @@ else
                 for ipos = 1 : size(stats.clusterstat{ilabel}{itemp}.posclusters,2)
                     if stats.clusterstat{ilabel}{itemp}.posclusters(ipos).prob < cfg.stats.alpha
                         sel = find(stats.clusterstat{ilabel}{itemp}.posclusterslabelmat == ipos);
-                        plot(stats.clusterstat{ilabel}{itemp}.time(sel),sdf_smooth.avg(itemp,sel+lag),'g','linewidth',2); % smoothed
-                        si = sel+lag;
-                        [Y,I] = max(sdf_smooth.avg(itemp,sel+lag));
+                        plot(stats.clusterstat{ilabel}{itemp}.time(sel),sdf_smooth.avg(itemp,round(sel+lag)),'g','linewidth',2); % smoothed
+                        si = round(sel+lag);
+                        [Y,I] = max(sdf_smooth.avg(itemp,round(sel+lag)));
                         
                         x = sdf_smooth.time(si(I));
                         y = sdf_smooth.avg(itemp,si(I));
@@ -307,9 +307,9 @@ else
                 for ineg = 1 : size(stats.clusterstat{ilabel}{itemp}.negclusters,2)
                     if stats.clusterstat{ilabel}{itemp}.negclusters(ineg).prob < cfg.stats.alpha
                         sel = find(stats.clusterstat{ilabel}{itemp}.negclusterslabelmat == ineg);
-                        plot(stats.clusterstat{ilabel}{itemp}.time(sel),sdf_smooth.avg(itemp,sel+lag),'r','linewidth',2); % smoothed
-                        si = sel+lag;
-                        [Y,I] = min(sdf_smooth.avg(itemp,sel+lag));
+                        plot(stats.clusterstat{ilabel}{itemp}.time(sel),sdf_smooth.avg(itemp,round(sel+lag+0.5)),'r','linewidth',2); % smoothed
+                        si = round(sel+lag);
+                        [Y,I] = min(sdf_smooth.avg(itemp,round(sel+lag+0.5)));
                         x = sdf_smooth.time(si(I));
                         y = sdf_smooth.avg(itemp,si(I));
                         plot(x,y-0.25,'^','markersize',10,'color',[1 0 0],'markerfacecolor',[1 0 0]);

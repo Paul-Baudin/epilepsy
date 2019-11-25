@@ -63,7 +63,7 @@ else
             temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-multifile-',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
             hdr_fname   = fullfile(temp(1).folder,temp(1).name);
             hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
-            %         timestamps  = ft_read_data(fullfile(temp(1).folder,temp(1).name),'timestamp','true');  % take the first concatinated file to extract the timestamps
+            timestamps  = ft_read_data(hdr_fname,'timestamp','true');  % take the first concatinated file to extract the timestamps
             %         timestamps  =  (0:hdr.nSamples-1) * hdr.TimeStampPerSample; % calculate timemstamps myself, as this is much faster
             
             % read spiketimes of clusters
@@ -90,8 +90,10 @@ else
                 SpikeRaw.amplitude{clusternr(i)+1} = h5read(fname_spikes,datasetname); % count from 1 instead of 0
                 
                 % map samplenrs onto timestamps
-                %             SpikeRaw.timestamp{i} = timestamps(SpikeRaw.samples{i});
-                SpikeRaw.timestamp{i} = SpikeRaw.samples{i} * hdr.TimeStampPerSample + double(hdr.FirstTimeStamp);
+                SpikeRaw.timestamp{i} = timestamps(SpikeRaw.samples{i});
+%                 SpikeRaw.timestamp{i} = SpikeRaw.samples{i} * hdr.TimeStampPerSample + double(hdr.FirstTimeStamp);
+%                 SpikeRaw.timestamp{i} = int64(SpikeRaw.samples{i}) * int64(hdr.TimeStampPerSample) + int64(hdr.FirstTimeStamp);         
+                
             end
             
             % load templates
@@ -147,7 +149,7 @@ else
                     catch
                         fprintf('No events starting with %s found in filenr %d\n',cfg.muse.startend{ilabel},idir);
                     end
-                    dirOnset = dirOnset + cfg.sampleinfo(idir,2);
+                    dirOnset = dirOnset + cfg.sampleinfo{ipart}{1}(idir,2); % assuming all channels have same sampleinfo
                 end
                 
                 cfgtemp                         = [];
@@ -159,7 +161,7 @@ else
                 cfgtemp.trl(:,8)                = Offset;                               % offset
                 cfgtemp.trl(:,9)                = Endsample-Startsample+1;              % duration in samples
                 cfgtemp.trl(:,10)               = Trialnr;                              % trialnr. to try to find trials that are missing afterwards
-                maxsamples                      = cumsum(cfg.sampleinfo(:,2));
+                maxsamples                      = cumsum(cfg.sampleinfo{ipart}{1}(:,2));
                 cfgtemp.trl                     = cfgtemp.trl(Startsample > 0 & Endsample < maxsamples(end),:); % so not to read before BOF or after EOFs
                 
                 % create spiketrials timelocked to events

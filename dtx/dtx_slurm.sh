@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=DTX
-#SBATCH --partition=normal
+#SBATCH --partition=bigmem
 #SBATCH --time=99:99:99
-#SBATCH --mem=100G
+#SBATCH --mem=150G
 #SBATCH --cpus-per-task=1
 #SBATCH --chdir=.
 #SBATCH --output=/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/slurm_output/output-%j.txt

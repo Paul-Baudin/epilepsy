@@ -12,8 +12,8 @@ if exist(fname_output,'file') && force == false
     fprintf('\nLoading trialinfo: %s \n',fname_output);
     temp = load(fname_output,'cfg');
     cfg.sampleinfo          = temp.cfg.sampleinfo;
-%     cfg.deadfile_ms         = temp.cfg.deadfile_ms;
-%     cfg.deadfile_samples    = temp.cfg.deadfile_samples;
+    cfg.deadfile_ms         = temp.cfg.deadfile_ms;
+    cfg.deadfile_samples    = temp.cfg.deadfile_samples;
     cfg.fnames_ncs          = temp.cfg.fnames_ncs;
     
 else
@@ -21,12 +21,17 @@ else
     % loop through different parts
     for ipart = 1 : size(MuseStruct,2)
         
+        % just define MuseStruct here for only one part to simplify code
+        % and similarity with no-parts
+        
         fprintf('\n*** Starting on part %d ***\n',ipart)
         % process channels separately
         for ichan = 1 : size(cfg.circus.channel,2)
             
+            cfg.sampleinfo{ipart}{ichan} = [];
+            clear dirdat
             % loop over all directories (time), concatinating channel
-            for idir = 1:length(MuseStruct{ipart})
+            for idir = 1 : size(MuseStruct{ipart},2)
                 
                 if write
                     
@@ -34,16 +39,19 @@ else
                     cfgtemp                   = [];
                     cfgtemp.dataset           = fullfile(MuseStruct{ipart}{idir}.directory, temp.name);
                     fprintf('LOADING: %s\n',cfgtemp.dataset);
-                    dirdat{idir}              = ft_preprocessing(cfgtemp);
+                    fname{1}                  = cfgtemp.dataset;
+                    dirdat{idir}              = ft_read_neuralynx_interp(fname);
+%                     dirdat{idir}              = ft_preprocessing(cfgtemp);
                     
                     if strcmp(cfg.circus.reref,'yes')
                         temp                      = dir(fullfile(MuseStruct{ipart}{idir}.directory,['*',cfg.circus.refchan,'.ncs']));
                         cfgtemp                   = [];
                         % for some reason I can't read this one: \\lexport\iss01.epimicro\patients\raw\pat_02711_1193\eeg\02711_2019-04-18_04-29\02711_2019-04-18_04-29_mHaT2_2.ncs'
-                        cfgtemp.dataset           = fullfile(MuseStruct{ipart}{idir}.directory, temp.name);
-                        
-                        fprintf('LOADING (reference): %s\n',cfgtemp.dataset);
-                        refdat                    = ft_preprocessing(cfgtemp);
+                        cfgtemp.dataset           = fullfile(MuseStruct{ipart}{idir}.directory, temp.name);                      
+                        fprintf('LOADING (reference): %s\n',cfgtemp.dataset);                 
+                        fname{1}                  = cfgtemp.dataset;
+                        refdat              = ft_read_neuralynx_interp(fname);                   
+%                         refdat                    = ft_preprocessing(cfgtemp);
                         dirdat{idir}.trial{1}     = dirdat{idir}.trial{1} - refdat.trial{1};
                         clear refdat
                     end
@@ -67,7 +75,7 @@ else
                 hdr  = ft_read_header(fullfile(MuseStruct{ipart}{idir}.directory, temp.name));
                 
                 % save sampleinfo to reconstruct data again after reading SC
-                cfg.sampleinfo(idir,:)    = [1 hdr.nSamples];
+                cfg.sampleinfo{ipart}{ichan}(idir,:) = [1 hdr.nSamples];
                 
             end
             
@@ -87,7 +95,7 @@ else
             fname                       = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-multifile-',cfg.labels.micro{ichan},'.ncs']);
             
             % save filenames to cfg (output of function)
-            cfg.fnames_ncs{ipart}{ichan}       = fname;
+            cfg.fnames_ncs{ipart}{ichan} = fname;
             
             % write data in .ncs format
             if write
@@ -101,7 +109,6 @@ else
                 hdr.label                   = chandat.label;
                 ft_write_data(fname,chandat.trial{1},'chanindx',1,'dataformat','neuralynx_ncs','header',hdr);
             end
-            %             cfg.fnames_ncs{ipart}{ichan} = fname;
             
             clear chandat
             clear dirdat
@@ -128,8 +135,8 @@ else
                                 deadfile_ms         = [deadfile_ms;         MuseStruct{ipart}{idir}.markers.BAD__START__.synctime'*1000+last_ms,      MuseStruct{ipart}{idir}.markers.BAD__END__.synctime'*1000+last_ms];
                                 deadfile_samples    = [deadfile_samples;    MuseStruct{ipart}{idir}.markers.BAD__START__.offset'+last_samples,        MuseStruct{ipart}{idir}.markers.BAD__END__.offset'+last_samples];
                                 hdr                 = ft_read_header(fullfile(MuseStruct{ipart}{idir}.directory,MuseStruct{ipart}{idir}.filenames{1}));
-                                last_samples        = last_samples + hdr.nSamples;
-                                last_ms             = last_ms + hdr.nSamples/hdr.Fs * 1000;
+                                last_samples        = last_samples  + hdr.nSamples;
+                                last_ms             = last_ms       + hdr.nSamples/hdr.Fs * 1000;
                                 
                             elseif size(MuseStruct{ipart}{idir}.markers.BAD__START__.events,2)-size(MuseStruct{ipart}{idir}.markers.BAD__END__.events,2) > 0
                                 

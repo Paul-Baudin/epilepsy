@@ -92,7 +92,7 @@ for ipatient = 1:6
     
     % write data concatinated for SC, and update config with sampleinfo;
     % reload, rewrite
-    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, false, false);
+    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, true, false);
     
     % create parameter and probe file for spyking circus
     writeSpykingCircusParameters(config{ipatient});
@@ -101,6 +101,17 @@ for ipatient = 1:6
 %     [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
     [SpikeRaw, SpikeTrials]                 = readSpykingCircus(config{ipatient}, MuseStruct_micro, true);
 
+    
+        ilabel = 1; 
+
+        cfgtemp                 = [];
+        cfgtemp.spikechannel    = 1;
+        cfgtemp.latency         = [config{ipatient}.epoch.toi{ilabel}(1), config{ipatient}.epoch.toi{ilabel}(2)];
+        cfgtemp.trialborders    = 'yes';
+        ft_spike_plot_raster(cfgtemp,SpikeTrials{ilabel});
+        
+    
+    
     % read and plot spikerate overview, and get the stats
     [SpikeRateStats{ipatient}, stats_bar, sdf_orig_out, sdf_bar_out] = spikeratestats(config{ipatient}, SpikeRaw, SpikeTrials, true);
  

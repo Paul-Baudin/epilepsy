@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=Hspike
-#SBATCH --partition=bigmem
+#SBATCH --job-name=Seg
+#SBATCH --partition=normal
 #SBATCH --time=99:99:99
-#SBATCH --mem=150G
+#SBATCH --mem=100G
 #SBATCH --cpus-per-task=1
 #SBATCH --chdir=.
 #SBATCH --output=/network/lustre/iss01/charpier/analyses/stephen.whitmarsh/slurm_output/output-%j.txt
