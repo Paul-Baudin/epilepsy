@@ -92,61 +92,13 @@ for ipatient = 1
     print(fig, '-dpdf', fullfile(config{ipatient}.imagesavedir,'averageLFP.pdf'),'-r300');
     
     % TFR
-    % time frequency analysis
-    cfgtemp                         = [];
-    cfgtemp.channel                 = 'all'; %ichannel;
-    cfgtemp.method                  = 'mtmconvol';
-    cfgtemp.output                  = 'pow';
-    cfgtemp.taper                   = 'hanning';
-    cfgtemp.pad                     = 'nextpow2';
-    cfgtemp.keeptrials              = 'yes';
-    cfgtemp.foi                     = 1:100;
-    cfgtemp.t_ftimwin               = 7./cfgtemp.foi;
-    cfgtemp.toi                     = config{ipatient}.epoch.toi{1}(1):0.05: config{ipatient}.epoch.toi{1}(2);
-    TFR_micro                       = ft_freqanalysis(cfgtemp,dat_micro_append);
-   
-    % plot TFR
-     
-    fig = figure;
-    subplot(2,1,1);
-    cfgtemp               = [];
-    cfgtemp.channel         = ichannel;
-    cfgtemp.baseline        = [-4, -2];
-    cfgtemp.baselinetype    = 'relchange';
-    cfgtemp.colorbar        = 'no';
-    cfgtemp.colorbar        = 'yes';
-    cfgtemp.zlim            = 'maxabs';
-    cfgtemp.xlim            = [-5 30];
-    cfgtemp.title           = 'Relative change from Baseline';
-    cfgtemp.parameter       = 'powspctrm';
-    cfgtemp.colormap        = parula(5000);
-    cfgtemp.renderer        = 'painters';
-    ft_singleplotTFR(cfgtemp,TFR{imarker} );
-    
-    subplot(2,1,2);
-    cfgtemp               = [];
-    cfgtemp.channel         = ichannel;
-    cfgtemp.baseline        = [-4, -2];
-    cfgtemp.baselinetype    = 'relchange';
-    cfgtemp.colorbar        = 'no';
-    cfgtemp.colorbar        = 'yes';
-    cfgtemp.zlim            = 'maxabs';
-    cfgtemp.xlim            = [-5 30];
-    cfgtemp.title           = 'Relative change (log power) from Baseline';
-    cfgtemp.parameter       = 'powspctrm';
-    cfgtemp.colormap        = parula(5000);
-    cfgtemp.renderer        = 'painters';
-    ft_singleplotTFR(cfgtemp,TFR_log{imarker} );
-    
-    % print ISI to file
-    fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
-    set(fig,'PaperOrientation','landscape');
-    set(fig,'PaperUnits','normalized');
-    set(fig,'PaperPosition', [0 0 1 1]);
-    print(fig, '-dpdf', fullfile(config{ipatient}.imagesavedir,[config{ipatient}.prefix, 'Avg_TFR_seizures.pdf']),'-r600');
-    
-    
-    
+    cfg = [];
+    cfg.method = 'mtmfft';
+    cfg.taper = 'hanning';
+    cfg.output = 'power';
+    cfg.foi = 1:100;
+    cfg.pad = 'nextpow2';
+    freq = ft_freqanalysis(cfg,dat_microFs);
     
 end
 

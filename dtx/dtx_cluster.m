@@ -62,34 +62,34 @@ for ipatient = 1:1
 %    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
     
     % create 'artefacts' to remove seizures and time from seizures
-    for ipart = 1 : size(MuseStruct_micro,2)
-        
-        % only when seizures are present
-        if isfield(MuseStruct_micro{ipart}.markers,'Crise_Start')
-            if isfield(MuseStruct_micro{ipart}.markers.Crise_Start,'offset')
-                
-                % if no artefact fields exist, create empty ones
-                if ~isfield(MuseStruct_micro{ipart}.markers,'BAD__START__')
-                    MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [];
-                    MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [];
-                    MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [];
-                    
-                    MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [];
-                    MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [];
-                    MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [];
-                end
-                
-                MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [MuseStruct_micro{ipart}.markers.BAD__START__.offset,   MuseStruct_micro{ipart}.markers.Crise_Start.offset];
-                MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [MuseStruct_micro{ipart}.markers.BAD__START__.synctime, MuseStruct_micro{ipart}.markers.Crise_Start.synctime];
-                MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [MuseStruct_micro{ipart}.markers.BAD__START__.clock,    MuseStruct_micro{ipart}.markers.Crise_Start.clock];
-                
-                MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [MuseStruct_micro{ipart}.markers.BAD__END__.offset,     MuseStruct_micro{ipart}.markers.Crise_End.offset];
-                MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [MuseStruct_micro{ipart}.markers.BAD__END__.synctime,   MuseStruct_micro{ipart}.markers.Crise_End.synctime];
-                MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [MuseStruct_micro{ipart}.markers.BAD__END__.clock,      MuseStruct_micro{ipart}.markers.Crise_End.clock];
-            end
-        end       
-    end
-    
+%     for ipart = 1 : size(MuseStruct_micro,2)
+%         
+%         % only when seizures are present
+%         if isfield(MuseStruct_micro{ipart}.markers,'Crise_Start')
+%             if isfield(MuseStruct_micro{ipart}.markers.Crise_Start,'offset')
+%                 
+%                 % if no artefact fields exist, create empty ones
+%                 if ~isfield(MuseStruct_micro{ipart}.markers,'BAD__START__')
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [];
+%                     
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [];
+%                 end
+%                 
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [MuseStruct_micro{ipart}.markers.BAD__START__.offset,   MuseStruct_micro{ipart}.markers.Crise_Start.offset];
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [MuseStruct_micro{ipart}.markers.BAD__START__.synctime, MuseStruct_micro{ipart}.markers.Crise_Start.synctime];
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [MuseStruct_micro{ipart}.markers.BAD__START__.clock,    MuseStruct_micro{ipart}.markers.Crise_Start.clock];
+%                 
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [MuseStruct_micro{ipart}.markers.BAD__END__.offset,     MuseStruct_micro{ipart}.markers.Crise_End.offset];
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [MuseStruct_micro{ipart}.markers.BAD__END__.synctime,   MuseStruct_micro{ipart}.markers.Crise_End.synctime];
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [MuseStruct_micro{ipart}.markers.BAD__END__.clock,      MuseStruct_micro{ipart}.markers.Crise_End.clock];
+%             end
+%         end       
+%     end
+%     
     % write data concatinated for SC, and update config with sampleinfo
     config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, true, true);
     

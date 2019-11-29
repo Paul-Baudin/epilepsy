@@ -50,16 +50,17 @@ config{1}.LFP.resamplefs            = 1000;
 config{1}.LFP.baseline              = 'yes';
 config{1}.LFP.baselinewindow{1}     = [-2, -1];
 config{1}.LFP.slidestep             = 0.01;
-config{1}.epoch.toi{1}              = [-5,  25];           
-% list of onset timing with respect tostart-marker (s)
+
+config{1}.epoch.toi{1}              = [-5, 5];  
 config{1}.epoch.pad                 = 0.5;
+
 config{1}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{1}.circus.reref              = 'no';
 config{1}.circus.refchan            = '';
 config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
-config{1}.circus.suffix             = '';
-config{1}.stats.actoi{1}            = [-4, 25];
+config{1}.circus.suffix             = '-1';
+config{1}.stats.actoi{1}            = [-4, 5];
 config{1}.stats.bltoi{1}            = [-5, -4];
 config{1}.stats.alpha               = 0.025;
 

@@ -40,7 +40,7 @@ else
     % find spiking-circus output path, which is based on the name of the
     % first datafile
 
-    temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.result.hdf5']));
+    temp = dir(fullfile(cfg.circus.outputdir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.result',cfg.circus.suffix,'.hdf5']));
 
     if isempty(temp)
         fprintf('Could not find Spyking-Circus results: %s\n',fullfile(cfg.datasavedir,cfg.circus.outputdir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.result.hdf5']));
@@ -64,10 +64,10 @@ else
         temp = dir(fullfile(cfg.datasavedir,[cfg.prefix,'multifile-',cfg.circus.channel{1},'.ncs']));
         hdr_fname   = fullfile(temp(1).folder,temp(1).name);
         hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data
-        %         timestamps  = ft_read_data(fullfile(temp(1).folder,temp(1).name),'timestamp','true');  % take the first concatinated file to extract the timestamps
+        timestamps  = ft_read_data(hdr_fname,'timestamp','true');  % take the first concatinated file to extract the timestamps
 %         timestamps  =  (0:hdr.nSamples-1) * hdr.TimeStampPerSample; % calculate timemstamps myself, as this is much faster
         
-        % read spiketimes of clusters
+        % find hdf5 index for spike times
         for i = 1 : size(datinfo.Groups,1)
             names(i) = string(datinfo.Groups(i).Name);
             if strfind(names(i),'spiketimes')
@@ -75,6 +75,7 @@ else
             end
         end
         
+        % find index of clusters 
         for i = 1 : size(datinfo.Groups(spiketimes_indx).Datasets,1) % number of templates
             SpikeRaw.label{i} = datinfo.Groups(spiketimes_indx).Datasets(i).Name;
             temp = strsplit(SpikeRaw.label{i},'_');
@@ -91,8 +92,8 @@ else
             SpikeRaw.amplitude{clusternr(i)+1} = h5read(fname_spikes,datasetname); % count from 1 instead of 0
             
             % map samplenrs onto timestamps
-%             SpikeRaw.timestamp{i} = timestamps(SpikeRaw.samples{i});
-            SpikeRaw.timestamp{i} = int64(SpikeRaw.samples{i}) * int64(hdr.TimeStampPerSample) + int64(hdr.FirstTimeStamp);         
+            SpikeRaw.timestamp{clusternr(i)+1} = timestamps(SpikeRaw.samples{clusternr(i)+1});
+           % SpikeRaw.timestamp{clusternr(i)+1} = int64(SpikeRaw.samples{clusternr(i)+1}) * int64(hdr.TimeStampPerSample) + int64(hdr.FirstTimeStamp);         
         end
         
         % load templates
@@ -111,8 +112,7 @@ else
             SpikeRaw.template(itemp,:,:) = template;
             SpikeRaw.template_maxchan(itemp) = i;
         end
-        
-        
+               
         % capitalize all markernames
         for idir = 1 : size(MuseStruct,2)
             markernames_old = fields(MuseStruct{idir}.markers);
@@ -140,7 +140,6 @@ else
                 end
             end
 
-
             % create Fieldtrip trl based on concatinated files by adding nr of
             % samples of each file
             
@@ -148,6 +147,8 @@ else
             Endsample = [];
             Offset = [];
             Trialnr = [];
+            Filenr = [];
+            FileOffset = [];
             
             dirOnset = 0;
             trialcount = 1;
@@ -158,7 +159,9 @@ else
                         Endsample    = [Endsample;   MuseStruct{idir}.markers.(cfg.muse.startend{ilabel,2}).offset(ievent) + cfg.epoch.toi{ilabel}(2) * hdr.Fs + dirOnset];
                         Offset       = [Offset; cfg.epoch.toi{ilabel}(1) * hdr.Fs];
                         Trialnr      = [Trialnr; trialcount];
+                        Filenr       = [Filenr; idir];
                         trialcount   = trialcount + 1;
+                        FileOffset   = [FileOffset; dirOnset];
                     end
                 catch
                     fprintf('No events starting with %s found in filenr %d\n',cfg.muse.startend{ilabel},idir);
@@ -175,7 +178,10 @@ else
             cfgtemp.trl(:,8)                = Offset;                               % offset
             cfgtemp.trl(:,9)                = Endsample-Startsample+1;              % duration in samples
             cfgtemp.trl(:,10)               = Trialnr;                              % trialnr. to try to find trials that are missing afterwards
-            maxsamples                      = cumsum(cfg.sampleinfo(:,2));
+            cfgtemp.trl(:,11)               = Filenr;                               % trialnr. to try to find trials that are missing afterwards
+            cfgtemp.trl(:,12)               = FileOffset;                           % trialnr. to try to find trials that are missing afterwards
+
+            maxsamples                      = sum(cfg.sampleinfo(:,2));
             cfgtemp.trl                     = cfgtemp.trl(Startsample > 0 & Endsample < maxsamples(end),:); % so not to read before BOF or after EOFs
             
             % create spiketrials timelocked to events
@@ -183,11 +189,7 @@ else
             cfgtemp.hdr                     = hdr;
             SpikeTrials{ilabel}             = ft_spike_maketrials(cfgtemp,SpikeRaw);
             SpikeTrials{ilabel}.clocktimes  = clocktimes;
-            
-            % commented out on 9-8-2019 after looking with Zoe
-%             SpikeRaw.time{ilabel}           = SpikeRaw.samples{ilabel} / hdr.Fs;
-%             SpikeRaw.trial{ilabel}          = ones(size(SpikeRaw.samples{ilabel}));
-            
+
         end % patterns
         SpikeRaw.trialtime = [0 hdr.nSamples / hdr.Fs];
         

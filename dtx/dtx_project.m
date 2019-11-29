@@ -59,57 +59,105 @@ for ipatient = 1:6
     end
     
     % read LFP data
-   [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
+    [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
     
-    % create 'artefacts' to remove seizures and time from seizures
-    for ipart = 1 : size(MuseStruct_micro,2)
-        
-        % only when seizures are present
-        if isfield(MuseStruct_micro{ipart}.markers,'Crise_Start')
-            if isfield(MuseStruct_micro{ipart}.markers.Crise_Start,'offset')
-                
-                % if no artefact fields exist, create empty ones
-                if ~isfield(MuseStruct_micro{ipart}.markers,'BAD__START__')
-                    MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [];
-                    MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [];
-                    MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [];
-                    
-                    MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [];
-                    MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [];
-                    MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [];
-                end
-                
-                MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [MuseStruct_micro{ipart}.markers.BAD__START__.offset,   MuseStruct_micro{ipart}.markers.Crise_Start.offset];
-                MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [MuseStruct_micro{ipart}.markers.BAD__START__.synctime, MuseStruct_micro{ipart}.markers.Crise_Start.synctime];
-                MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [MuseStruct_micro{ipart}.markers.BAD__START__.clock,    MuseStruct_micro{ipart}.markers.Crise_Start.clock];
-                
-                MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [MuseStruct_micro{ipart}.markers.BAD__END__.offset,     MuseStruct_micro{ipart}.markers.Crise_End.offset];
-                MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [MuseStruct_micro{ipart}.markers.BAD__END__.synctime,   MuseStruct_micro{ipart}.markers.Crise_End.synctime];
-                MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [MuseStruct_micro{ipart}.markers.BAD__END__.clock,      MuseStruct_micro{ipart}.markers.Crise_End.clock];
-            end
-        end       
+    % plot all slow waves of one macro
+    fig             = figure; hold;
+    fig.Renderer    = 'Painters'; % Else pdf is saved to bitmap
+    h               = 1000;
+    n               = size(dat_macro{1}.trial,2);
+    for itrial = 1 : size(dat_micro{1}.trial,2)  
+        plot(dat_macro{1}.time{itrial},dat_macro{1}.trial{itrial}(6,:) + n*h - itrial*h,'k');
     end
+        
+    title('Aligned data');
+    set(gca, 'YTickLabel', '');
+    xlabel('Time (s)');
+    xlim(config{1}.epoch.toi{1});
+    tick = h;
+    yticks(0 : tick*10 : y(2));
+    yticklabels(n : -10 : 0);
+    set(gca,'TickDir','out');
+    axis tight
+    
+    % print to file
+    set(fig,'PaperOrientation','landscape');
+    set(fig,'PaperUnits','normalized');
+    set(fig,'PaperPosition', [0 0 1 1]);
+    set(fig,'Renderer','Painters');
+    print(fig, '-dpdf', fullfile(config{ipatient}.imagesavedir,[config{ipatient}.prefix,'LFP_chan',dat_micro{1}.label{6}]),'-r600');
+    close all
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+%     % create 'artefacts' to remove seizures and time from seizures
+%     for ipart = 1 : size(MuseStruct_micro,2)
+%         
+%         % only when seizures are present
+%         if isfield(MuseStruct_micro{ipart}.markers,'Crise_Start')
+%             if isfield(MuseStruct_micro{ipart}.markers.Crise_Start,'offset')
+%                 
+%                 % if no artefact fields exist, create empty ones
+%                 if ~isfield(MuseStruct_micro{ipart}.markers,'BAD__START__')
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [];
+%                     
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [];
+%                     MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [];
+%                 end
+%                 
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.offset      = [MuseStruct_micro{ipart}.markers.BAD__START__.offset,   MuseStruct_micro{ipart}.markers.Crise_Start.offset];
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.synctime    = [MuseStruct_micro{ipart}.markers.BAD__START__.synctime, MuseStruct_micro{ipart}.markers.Crise_Start.synctime];
+%                 MuseStruct_micro{ipart}.markers.BAD__START__.clock       = [MuseStruct_micro{ipart}.markers.BAD__START__.clock,    MuseStruct_micro{ipart}.markers.Crise_Start.clock];
+%                 
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.offset        = [MuseStruct_micro{ipart}.markers.BAD__END__.offset,     MuseStruct_micro{ipart}.markers.Crise_End.offset];
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.synctime      = [MuseStruct_micro{ipart}.markers.BAD__END__.synctime,   MuseStruct_micro{ipart}.markers.Crise_End.synctime];
+%                 MuseStruct_micro{ipart}.markers.BAD__END__.clock         = [MuseStruct_micro{ipart}.markers.BAD__END__.clock,      MuseStruct_micro{ipart}.markers.Crise_End.clock];
+%             end
+%         end       
+%     end
     
     % write data concatinated for SC, and update config with sampleinfo;
     % reload, rewrite
     config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, true, false);
     
     % create parameter and probe file for spyking circus
-    writeSpykingCircusParameters(config{ipatient});
+%     writeSpykingCircusParameters(config{ipatient});
         
     % read raw spike data from SC, and segment into trials, requires 
 %     [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
     [SpikeRaw, SpikeTrials]                 = readSpykingCircus(config{ipatient}, MuseStruct_micro, true);
 
     
-        ilabel = 1; 
-
+    ilabel = 1;
+    
+    for ichan = 1 : size(SpikeTrials{ilabel}.label,2)
+        h = figure;
+        
         cfgtemp                 = [];
-        cfgtemp.spikechannel    = 1;
+        cfgtemp.spikechannel    = ichan;
         cfgtemp.latency         = [config{ipatient}.epoch.toi{ilabel}(1), config{ipatient}.epoch.toi{ilabel}(2)];
         cfgtemp.trialborders    = 'yes';
         ft_spike_plot_raster(cfgtemp,SpikeTrials{ilabel});
         
+        % print to file
+        set(h,'PaperOrientation','landscape');
+        set(h,'PaperUnits','normalized');
+        set(h,'PaperPosition', [0 0 1 1]);
+        set(h,'Renderer','Painters');
+        print(h, '-dpdf', fullfile(config{ipatient}.imagesavedir,[config{ipatient}.prefix,'raster_cluster',SpikeTrials{ilabel}.label{ichan}]),'-r600');
+        close all
+        
+    end
     
     
     % read and plot spikerate overview, and get the stats
@@ -120,6 +168,43 @@ for ipatient = 1:6
 end
 
     
+        hold;
+            for itrial = 1 : size(dat_sel_aligned.trial,2)
+                if haspeak(itrial)
+                    color = 'k';
+                    t       = 0;
+                    line([t,t],[(itrial-0.5)*h,(itrial+0.5)*h],'color','r');
+                    plot(dat_sel_aligned.time{itrial},dat_sel_aligned.trial{itrial} + itrial*h,'color',color);
+                else
+                    color = 'r';
+                end
+                if hasartefact(itrial)
+                    color = 'c';
+                else
+                    color = 'k';
+                end
+                
+            end
+            title('Aligned data');
+            set(gca, 'YTickLabel', '');
+            xlabel('Time (s)');
+            axis tight
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 d = dir(fullfile(config{ipatient}.circus.outputdir,[config{ipatient}.prefix,'*.GUI']));
 datadir = fullfile(d.folder,d.name);

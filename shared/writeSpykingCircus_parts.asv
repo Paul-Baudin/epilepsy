@@ -182,21 +182,17 @@ else
             cfg.deadfile_samples{ipart}    = deadfile_samples;
             
             % write artefacts to txt file for spyking circus
-%             filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_ms.dead']);
-            filename = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'SpykingCircus_artefacts_ms.dead']);
+            filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_ms.dead']);
+            filename = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'-multifile-',cfg.labels.micro{ichan},'.ncs']);
 
             fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
             dlmwrite(filename,deadfile_ms,'delimiter','	','precision','%.4f');
             
-%             filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_samples.dead']);
-            filename = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'SpykingCircus_artefacts_samples.dead']);
-            
+            filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_artefacts_samples.dead']);
             fprintf('Writing artefacts for Spyking-Circus to: %s\n',filename);
             dlmwrite(filename,deadfile_samples,'delimiter','	','precision','%.4f');
             
-%             filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_dirlist.txt']);
-            filename = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'SpykingCircus_dirlist.txt']);
-            
+            filename = fullfile(cfg.datasavedir,[cfg.prefix,'p',num2str(ipart),'-SpykingCircus_dirlist.txt']);
             fprintf('Writing list of directories for Spyking-Circus to: %s\n',filename);
             dlmwrite(filename,dirlist{ipart});
             

@@ -38,12 +38,16 @@ if ~isempty(markfile)
     color           = markfile(strmatch('COLOR:', markfile, 'exact') + 1);
     editable        = markfile(strmatch('EDITABLE:', markfile, 'exact') + 1);
     classid         = markfile(strmatch('CLASSID:', markfile, 'exact') + 1);
-    %     nrEvents        = str2num(char(markfile(strmatch('NUMBER OF SAMPLES:', markfile, 'exact') + 1)));
+    nrEvents        = str2num(char(markfile(strmatch('NUMBER OF SAMPLES:', markfile, 'exact') + 1)));
     
-    y1 = strmatch('CLASSGROUPID:', markfile, 'exact');
-    y2 = strmatch('TRIAL NUMBER		TIME FROM SYNC POINT (in seconds)', markfile, 'exact');
-    nrEvents = y1(2:end) - y2(1:end-1) - 3;
-    nrEvents(end+1) = size(markfile,2) - y2(end) - 2;
+    % I need to simplify and document this block of code someday. 
+%     y1 = strmatch('CLASSGROUPID:', markfile, 'exact');
+%     y2 = strmatch('TRIAL NUMBER		TIME FROM SYNC POINT (in seconds)', markfile, 'exact');
+%     nrEvents = y1(2:end) - y2(1:end-1) - 3;
+%     nrEvents(end+1) = size(markfile,2) - y2(end) - 2;
+%     if nrEvents(end) < 0
+%          nrEvents(end) = 0;
+%     end
     
     % Get the events, time in seconds from onset of file
     j = strmatch('LIST OF SAMPLES:', markfile, 'exact') + 2;

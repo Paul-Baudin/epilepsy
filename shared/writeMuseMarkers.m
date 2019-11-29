@@ -34,7 +34,7 @@ fprintf(fid,'\n\n');
 
 % add marker
 for imarker = 1 : mrk_number
-    
+     
     fprintf(fid,'%s\n', 'CLASSGROUPID:');
     fprintf(fid,'%s\n', MuseStruct.markers.(names{imarker}).classgroupid);
     fprintf(fid,'%s\n', 'NAME:');

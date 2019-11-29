@@ -169,10 +169,6 @@ else
         cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
         stats.isi_pattern_all{ilabel}   = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
-        %%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%
         cfgtemp.latency                 = cfg.stats.bltoi{ilabel};
         stats.isi_pattern_bl{ilabel}    = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
@@ -330,15 +326,15 @@ else
             times(remove)   = [];
             indx(remove)    = [];
             
-            % plot durations between zero crossings
-            dtimes = diff(times);
-            plot(times,sdf_smooth.avg(itemp,indx),'.','markersize',10,'color',[0 0 1],'markerfacecolor',[1 0 0]);
-            for itxt = 1 : size(dtimes,2)
-                x = (times(itxt) + times(itxt+1))/2;
-                y = stats.clusterstat{ilabel}{itemp}.bl.avg;
-                text(x,y,sprintf('%.0fms',dtimes(itxt)*1000),'HorizontalAlignment','center','VerticalAlignment','bottom','color',[0 0 1],'fontsize',6);
-            end
-            axis tight;
+%             % plot durations between zero crossings
+%             dtimes = diff(times);
+%             plot(times,sdf_smooth.avg(itemp,indx),'.','markersize',10,'color',[0 0 1],'markerfacecolor',[1 0 0]);
+%             for itxt = 1 : size(dtimes,2)
+%                 x = (times(itxt) + times(itxt+1))/2;
+%                 y = stats.clusterstat{ilabel}{itemp}.bl.avg;
+%                 text(x,y,sprintf('%.0fms',dtimes(itxt)*1000),'HorizontalAlignment','center','VerticalAlignment','bottom','color',[0 0 1],'fontsize',6);
+%             end
+%             axis tight;
             
             % plot baseline patch
             x = [cfg.stats.bltoi{ilabel}(1) cfg.stats.bltoi{ilabel}(2) cfg.stats.bltoi{ilabel}(2) cfg.stats.bltoi{ilabel}(1)];
@@ -489,12 +485,20 @@ else
 %             
             % plot ISI
             subplot(3,3,3); hold;
-            barh = bar(stats.isi_1s.time*1000,[stats.isi_1s.avg(itemp,:); stats.isi_pattern_all{ilabel}.avg(itemp,:); stats.isi_pattern_bl{ilabel}.avg(itemp,:); stats.isi_pattern_ac{ilabel}.avg(itemp,:);]',1,'grouped','edgecolor','none');
-            barh(1).FaceColor = [0 0 0];
-            barh(2).FaceColor = [0 1 0];
-            barh(3).FaceColor = [0 0 1];
-            barh(4).FaceColor = [1 0 0];
-            legend({'1 sec all data','whole trial','baseline trial','active trial'});
+%             barh = bar(stats.isi_1s.time*1000,[stats.isi_1s.avg(itemp,:); stats.isi_pattern_all{ilabel}.avg(itemp,:); stats.isi_pattern_bl{ilabel}.avg(itemp,:); stats.isi_pattern_ac{ilabel}.avg(itemp,:);]',1,'grouped','edgecolor','none');
+%             barh(1).FaceColor = [0 0 0];
+%             barh(2).FaceColor = [0 1 0];
+%             barh(3).FaceColor = [0 0 1];
+%             barh(4).FaceColor = [1 0 0];
+%             legend({'1 sec all data','whole trial','baseline trial','active trial'});
+%             
+            
+              barh = bar(stats.isi_1s.time*1000,stats.isi_pattern_all{ilabel}.avg(itemp,:));
+%                         barh(1).FaceColor = [0 0 0];
+%             barh(2).FaceColor = [0 1 0];
+%             barh(3).FaceColor = [0 0 1];
+%             barh(4).FaceColor = [1 0 0];
+%             legend({'1 sec all data','whole trial','baseline trial','active trial'});
             xticks(stats.isi_pattern_ac{ilabel}.time*1000);
             xtickangle(90);
             axis tight

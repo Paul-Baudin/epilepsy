@@ -195,10 +195,10 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     print(fig, '-dpng', fullfile(cfg.hyp.imagesavedir,[cfg.prefix,'alignment_',name,'.png']),'-r600');
     close all
     
-    % read hypnogram, remove sample
+    % read hypnogram exported from Micromed
     hyp = readtable(fullfile(micromed_hypnfilelist(iMicroMed).folder,micromed_hypnfilelist(iMicroMed).name),'FileType','text');
     
-    % apply synchronization
+    % apply synchronization (overwrite startSec and endSec)
     hyp.startSec    = round(hyp.startSec + (D / hdrMM.Fs),4);
     hyp.endSec      = round(hyp.endSec   + (D / hdrMM.Fs),4);
     
@@ -212,22 +212,22 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
     end
     
     % figure out which hypnogram markers belong to which Neuralynx file
-    filelengthc = cumsum(filelength);
+    filelengthc     = cumsum(filelength);
     hyp.startfilenr = zeros(height(hyp),1);
-    hyp.endfilenr = zeros(height(hyp),1);
+    hyp.endfilenr   = zeros(height(hyp),1);
     for i = 1 : size(filelength,2)
         hyp.startfilenr(hyp.startSec >= filelengthc(i)) = hyp.startfilenr(hyp.startSec >= filelengthc(i)) + 1;
-        hyp.endfilenr(hyp.endSec >= filelengthc(i)) = hyp.endfilenr(hyp.endSec >= filelengthc(i)) + 1;
+        hyp.endfilenr(hyp.endSec >= filelengthc(i))     = hyp.endfilenr(hyp.endSec >= filelengthc(i)) + 1;
     end
     
     % split those hypnogram markers span over multiple files
     if any(hyp.startfilenr ~= hyp.endfilenr)
         for imarker = find(hyp.startfilenr ~= hyp.endfilenr)
-            hyp(end+1,:) = hyp(imarker,:);
-            hyp.startSec(end) = filelengthc(hyp.endfilenr(imarker));
-            hyp.startfilenr(end) = hyp.endfilenr(end);
-            hyp.endSec(imarker) = filelengthc(hyp.endfilenr(imarker));
-            hyp.endfilenr(imarker) = hyp.startfilenr(imarker);
+            hyp(end+1,:)            = hyp(imarker,:);
+            hyp.startSec(end)       = filelengthc(hyp.endfilenr(imarker));
+            hyp.startfilenr(end)    = hyp.endfilenr(end);
+            hyp.endSec(imarker)     = filelengthc(hyp.endfilenr(imarker));
+            hyp.endfilenr(imarker)  = hyp.startfilenr(imarker);
         end
     end
     
@@ -237,19 +237,20 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
         hyp.endSec(i)   = hyp.endSec(i) - filelengthc(hyp.startfilenr(i));
     end
     
-    % add to Muse events file
     hypi = 1;
+    
+    % loop over relevant neuralynx directories
     for idir = [hasoverlap{iMicroMed}]
         
-        % first read Muse events file
-        name_mrk = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk'); 
-        MuseStruct = readMuseMarker(name_mrk);
+        %  read Muse events file
+        name_mrk    = fullfile(neuralynx_dirlist(idir).folder,neuralynx_dirlist(idir).name,'Events.mrk'); 
+        MuseStruct  = readMuseMarker(name_mrk);
         
-        % select those hypnogram markers that belong the the current Muse (neuralynx) marker file
-        hyp_file = hyp(hyp.startfilenr == hypi,:);
+        % select those hypnogram markers that belong to the current Muse (neuralynx) marker file
+        hyp_file    = hyp(hyp.startfilenr == hypi,:);
         
         for label = unique(hyp_file.stage)'
-            
+            disp(['Working on ',label{1}]);
             if strcmp(label,'BEGIN')
                 
                 MuseStruct.markers.StartHypnogram.synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
@@ -275,8 +276,14 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
             % for those markers that have a duration
             if hyp_file.startSec(strcmp(hyp_file.stage, label)) ~= hyp_file.endSec(strcmp(hyp_file.stage, label))
                 
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum       = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime))';  % replace space with underscore
+                % concatinates with existing markers. Duplicates are
+                % removed by writeMuseMarker
+                
+                try
+                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = [MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime, hyp_file.startSec(strcmp(hyp_file.stage, label))'];     % replace space with underscore           
+                catch
+                    MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime       = hyp_file.startSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
+                end
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).classgroupid   = '+3';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).comment        = 'Exported from hypnogram';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).editable       = 'Yes';
@@ -297,8 +304,13 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
                         MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).color = 'black';
                 end
                 
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label))';     % replace space with underscore
-                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime))';  % replace space with underscore
+                % concatinates with existing markers. Duplicates are
+                % removed by writeMuseMarker
+                try
+                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = [MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime, hyp_file.endSec(strcmp(hyp_file.stage, label))'];     % replace space with underscore             
+                catch
+                    MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = hyp_file.endSec(strcmp(hyp_file.stage, label))';     % replace space with underscore          
+                end
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).classgroupid = '+3';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).comment      = 'Exported from hypnogram';
                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).editable     = 'Yes';
@@ -319,6 +331,19 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
                         MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).color = 'black';
                 end
                 
+                % round to 2 decimals
+                 MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime =  round(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime,2);
+                 MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime =  round(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime,2);
+                
+                % remove duplicates 
+                [~,IA,IC] = unique([MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime; MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime]','rows');
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime   = MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime(IA);
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime     = MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime(IA);
+                
+                % add trialnr (zeros)                
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).trialnum   = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__START__']).synctime))';
+                MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).trialnum     = zeros(size(MuseStruct.markers.([strrep(label{1},' ','_'), '__END__']).synctime))';  % replace space with underscore
+
 %             else
 %                 MuseStruct.markers.(strrep(label{1},' ','_')).synctime      = hyp_file.endSec(strcmp(hyp_file.stage, label));  % replace space with underscore
 %                 MuseStruct.markers.(strrep(label{1},' ','_')).trialnum      = zeros(size(MuseStruct.markers.(strrep(label{1},' ','_')).synctime));  % replace space with underscore
@@ -340,9 +365,12 @@ for iMicroMed = 1 : size(micromed_hypnfilelist,1)
 %                     otherwise
 %                         MuseStruct.markers.(strrep(label{1},' ','_')).color = 'black';
 %                 end
+            
+
+                
             end
         end
-        
+
         % backup markerfile
         if ~exist(cfg.hyp.backupdir,'DIR')
             error('Backup directory does not exist');

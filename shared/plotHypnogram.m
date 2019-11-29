@@ -6,7 +6,7 @@ MuseStruct_append = []; %rmfield(MuseStruct{1},'filenames');
 MuseStruct_append.markers = [];
 
 
-%% Deal with differnt parts
+%% Deal with different files
 
 % adding next directories
 for idir = 1 : size(MuseStruct,2)
@@ -74,11 +74,12 @@ t = unique(t,'rows');
 t = sortrows(t,2);
 
 i = 1;
+
 % find corresponding end-time. Bit ugly code
 while i < height(t)
     if contains(t.markerlabel(i),'__START__')     
         t.markerlabel(i) = t.markerlabel{i}(1:end-9);
-        endsindx = find(contains(t.markerlabel,strcat(t.markerlabel(i),'__END__')));
+        endsindx = find(contains(t.markerlabel,strcat(t.markerlabel{i},'__END__')));
         endsindx = endsindx(endsindx > i);
         endindx = endsindx(1);
         t.endtime(i) = t.starttime(endindx);
@@ -91,9 +92,6 @@ end
 hyp_tbl = t(contains(t.markerlabel,config.hyp.contains),:);
 mrk_tbl = t(contains(t.markerlabel,config.hyp.markers),:);
 
-
-
-% 
 % startsindx = find(contains(t.markerlabel,'CriseStart'));
 % endsindx   = find(contains(t.markerlabel,'CriseEnd'));
 % 
@@ -102,19 +100,17 @@ mrk_tbl = t(contains(t.markerlabel,config.hyp.markers),:);
 % fprintf('\n%d Patterns found\n',numel(startsindx));
 
 % segment into patterns/seizures/hypnograms
-hyp_startsindx  = [1; find(diff(hyp_tbl.endtime) > hours(2))+1];
-hyp_endsindx    = [find(diff(hyp_tbl.endtime) > hours(2)); height(hyp_tbl)];
+hyp_startsindx          = [1; find(diff(hyp_tbl.endtime) > hours(4))+1];
+hyp_endsindx            = [find(diff(hyp_tbl.endtime) > hours(4)); height(hyp_tbl)];
 
+% select markers that occur within hypnogram
 for i = 1 : numel(hyp_startsindx)
-    hyp_night{i}       = hyp_tbl(hyp_startsindx(i)+1:hyp_endsindx(i)-1,:);
-    hyp_starttime(i)   = hyp_tbl.starttime(hyp_startsindx(i));
-    hyp_endtime(i)     = hyp_tbl.starttime(hyp_endsindx(i));
-    mrk_night{i}       = mrk_tbl(mrk_tbl.starttime >= hyp_starttime(i) & mrk_tbl.endtime <= hyp_endtime(i),:);
-    
+    hyp_night{i}        = hyp_tbl(hyp_startsindx(i)+1:hyp_endsindx(i)-1,:);
+    hyp_starttime(i)    = hyp_tbl.starttime(hyp_startsindx(i));
+    hyp_endtime(i)      = hyp_tbl.starttime(hyp_endsindx(i));
+    mrk_night{i}        = mrk_tbl(mrk_tbl.starttime >= hyp_starttime(i) & mrk_tbl.endtime <= hyp_endtime(i),:);
 end
-% t(contains(t.markerlabel,config.pattern.startmarker) | contains(t.markerlabel,config.pattern.endmarker),:) = [];
-maxlength = max(hyp_endtime - hyp_starttime);
-
+maxlength               = max(hyp_endtime - hyp_starttime);
 
 %% plotting
 colortable.label = unique(mrk_tbl.markerlabel);
@@ -124,33 +120,36 @@ h = figure;
 for nighti = 1 : size(hyp_night,2)
     
     subplot(size(hyp_night,2)+1,1,nighti); hold;
+    
+    % create empty space to fit all
     fill([hyp_night{nighti}.starttime(1), hyp_starttime(nighti) + maxlength, hyp_starttime(nighti) + maxlength, hyp_night{nighti}.starttime(1)],[0 0 1 1],[1 1 1],'EdgeColor',[1 1 1]);
     X = [];
     Y = [];
     
-    for im = 1 : height(mrk_night{nighti})
-        
+    for im = 1 : height(mrk_night{nighti})        
         c = colortable.color(strcmp(colortable.label,mrk_night{nighti}.markerlabel(im)),:);
         fill([mrk_night{nighti}.starttime(im), mrk_night{nighti}.endtime(im), mrk_night{nighti}.endtime(im), mrk_night{nighti}.starttime(im)],[0 0 1 1],c,'EdgeColor',c,'facealpha',1);
     end
     
     for im = 1 : height(hyp_night{nighti})
         if ~isempty(X)
+            
+            % if there's a gap, 'fill' with 0 
             if hyp_night{nighti}.starttime(im) ~= X(end)
                 X = [X, X(end) hyp_night{nighti}.starttime(im)];
                 Y = [Y, 0,  0];
-            end
-        end
-        
+            end 
+        end       
         X = [X, hyp_night{nighti}.starttime(im), hyp_night{nighti}.endtime(im)];
+
+        % height is based on order of config.hyp.contains
         y = find(contains(config.hyp.contains,hyp_night{nighti}.markerlabel(im)));
         Y = [Y, y, y];
     end
-    
+
     for i = 1 : length(X)-1
         if Y(i) ~= 0 && Y(i+1) ~= 0
-            if strcmp(config.hyp.contains(Y(i)),'REM') && strcmp(config.hyp.contains(Y(i+1)),'REM')
-                
+            if strcmp(config.hyp.contains(Y(i)),'REM') && strcmp(config.hyp.contains(Y(i+1)),'REM')     
                 plot([X(i) X(i+1)],[Y(i) Y(i+1)],'k','LineWidth',3);
             else
                 plot([X(i) X(i+1)],[Y(i) Y(i+1)],'k');
@@ -159,7 +158,15 @@ for nighti = 1 : size(hyp_night,2)
     end
     set(gca,'Layer','top');
     set(gca,'Ytick', 1 : length(config.hyp.contains),'Yticklabels',strrep(config.hyp.contains,'_',' '),'TickDir','out');
-    axis tight;
+    axis tight; 
+
+%     for i = 1 : length(X)-1
+%         if Y(i) == 0 && Y(i+1) == 0
+%             plot([X(i) X(i+1)],[6 6],'.r');
+%             text(X(i),6,datestr(X(i),13),'vert','bottom','horiz','center'); 
+%         end
+%     end
+   
 end
 
 % add color legend for markers
@@ -182,5 +189,15 @@ set(h,'PaperUnits','normalized');
 set(h,'PaperPosition', [0 0 1 1]);
 set(h,'Renderer','Painters');
 print(h, '-dpdf', fullfile(config.imagesavedir,[config.prefix,'hypnogram.pdf']),'-r600');
+
+set(gcf,'PaperUnits','centimeters'); 
+set(gcf,'PaperSize',[300 10]); 
+h.PaperUnits = 'centimeters';  
+h.PaperPosition = [0 0 300 10]; 
+h.Units = 'centimeters'; 
+h.PaperSize=[300 10]; 
+h.Units = 'centimeters'; 
+print(h, '-dpdf', fullfile(config.imagesavedir,[config.prefix,'hypnogram_3m.pdf']),'-r600');
+
 % writetable(t,fullfile(config.imagesavedir,'seg_labels'));
 disp('Done');

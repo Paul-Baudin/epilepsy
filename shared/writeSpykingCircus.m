@@ -43,8 +43,10 @@ else
                 temp                      = dir(fullfile(MuseStruct{idir}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
                 cfgtemp                   = [];
                 cfgtemp.dataset           = fullfile(MuseStruct{idir}.directory, temp.name);
+                fprintf('Loading data from %s\n',cfgtemp.dataset);
                 
                 % load data
+                clear fname
                 fname{1}                  = cfgtemp.dataset;
                 dirdat{idir}              = ft_read_neuralynx_interp(fname);
                 %                 dirdat{idir}              = ft_preprocessing(cfgtemp);
@@ -54,7 +56,10 @@ else
                     temp                      = dir(fullfile(MuseStruct{idir}.directory,['*',cfg.circus.refchan,'.ncs']));
                     cfgtemp                   = [];
                     cfgtemp.dataset           = fullfile(MuseStruct{idir}.directory, temp.name);
+                    clear fname
                     fname{1}                  = cfgtemp.dataset;
+                    fprintf('Loading data from %s\n',cfgtemp.dataset);
+                    
                     dirdat{idir}              = ft_read_neuralynx_interp(fname);
                     %                     refdat                    = ft_preprocessing(cfgtemp);
                     dirdat{idir}.trial{1}     = dirdat{idir}.trial{1} - refdat.trial{1};
@@ -77,10 +82,12 @@ else
             
             % create sampleinfo (nr of samples in file)
             temp                    = dir(fullfile(MuseStruct{idir}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
+            fprintf('Loading header from %s\n',fullfile(MuseStruct{idir}.directory, temp.name));
+
             hdr                     = ft_read_header(fullfile(MuseStruct{idir}.directory, temp.name));
             
             % save sampleinfo to reconstruct data again after reading SC
-            cfg.sampleinfo(idir,:)  = [1 hdr.nSamples];
+            cfg.sampleinfo(idir,:)  = [hdr.nSamplesPre hdr.nSamples];
             
         end
         
@@ -96,6 +103,7 @@ else
         
         % create filename for concatinated data - based on first directory
         temp                        = dir(fullfile(MuseStruct{1}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
+        fprintf('Loading header from %s\n',fullfile(MuseStruct{1}.directory, temp.name));
         hdrtemp                     = ft_read_header(fullfile(MuseStruct{1}.directory, temp.name));
         fname                       = fullfile(cfg.datasavedir,[cfg.prefix,'multifile-',cfg.labels.micro{ichan},'.ncs']);
         
@@ -114,6 +122,7 @@ else
             hdr.label                   = chandat.label;
             ft_write_data(fname,chandat.trial{1},'chanindx',1,'dataformat','neuralynx_ncs','header',hdr);
         end
+        clear fname
         clear chandat
         clear dirdat
         
