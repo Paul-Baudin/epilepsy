@@ -22,13 +22,20 @@ end
 
 % Rodent 1
 config{1}.os                        = os;
-config{1}.name                      = { 'SlowWave'};
+config{1}.name                      = {'SlowWave','Seizure','InterIctal'};
 config{1}.prefix                    = 'DTX5-';
-config{1}.muse.startend             = { 'SlowWave','SlowWave'};   % start and end Muse marker
+config{1}.muse.startend             = {'SlowWave','Crise_Start'; 'Crise_Start','Crise_End'; 'Crise_End','SlowWave'};   % start and end Muse marker
 config{1}.rawdir                    = fullfile(rootpath_data, 'DTX5-M1-10uM', '2019_03_19_DTX-5');
 config{1}.datasavedir               = fullfile(rootpath_analysis, 'data',   'dtx');         % where to write data
 config{1}.imagesavedir              = fullfile(rootpath_analysis, 'images', 'dtx');       % where to print images
-config{1}.directory_searchstring    = '2019*';
+config{1}.directorylist{1}          =  {'2019-03-19_13-18',...
+                                        '2019-03-19_14-30',...
+                                        '2019-03-19_16-30',...
+                                        '2019-03-19_18-30',...
+                                        '2019-03-19_20-30',...
+                                        '2019-03-19_22-30',...
+                                        '2019-03-20_00-30'};    
+                                    
 config{1}.labels.micro              = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{1}.labels.macro              = {'E07LFP','E08LFP','E09LFP','E10LFP','E11LFP','E12LFP','E13LFP','E14LFP','E15LFP'};
 config{1}.align.name                = {'SlowWave'};
@@ -51,8 +58,12 @@ config{1}.LFP.baseline              = 'yes';
 config{1}.LFP.baselinewindow{1}     = [-2, -1];
 config{1}.LFP.slidestep             = 0.01;
 
-config{1}.epoch.toi{1}              = [-5, 5];  
-config{1}.epoch.pad                 = 0.5;
+config{1}.epoch.toi{1}              = [-2, 0];  
+config{1}.epoch.toi{2}              = [-2, 1];  
+config{1}.epoch.toi{3}              = [1, -2];  
+config{1}.epoch.pad{1}              = 0.5;
+config{1}.epoch.pad{2}              = 0.5;
+config{1}.epoch.pad{3}              = 0.5;
 
 config{1}.circus.channel            = {'E07','E08','E09','E10','E11','E12','E13','E14','E15','E16'};
 config{1}.circus.reref              = 'no';
@@ -60,15 +71,25 @@ config{1}.circus.refchan            = '';
 config{1}.circus.outputdir          = fullfile(rootpath_analysis, 'data', 'dtx', 'SpykingCircus');
 config{1}.circus.hpfilter           = 'no'; % hp before writing data for SC, does not change the hp of SC
 config{1}.circus.suffix             = '-1';
-config{1}.stats.actoi{1}            = [-4, 5];
-config{1}.stats.bltoi{1}            = [-5, -4];
+
+config{1}.stats.bltoi{1}            = [-2, -1];
+config{1}.stats.bltoi{1}            = [-2, -1];
+config{1}.stats.bltoi{1}            = [0, 1];
+config{1}.stats.actoi{1}            = [-1, 0];
+config{1}.stats.actoi{1}            = [-1, 0];
+config{1}.stats.actoi{1}            = [1, 0];
 config{1}.stats.alpha               = 0.025;
 
 config{1}.spike.slidestep           = [0.01];
 config{1}.spike.toispikerate{1}     = [-0.1 0.1];           % for plotting spikerate
+config{1}.spike.toispikerate{2}     = [-0.1 0.1];           % for plotting spikerate
+config{1}.spike.toispikerate{3}     = [-0.1 0.1];           % for plotting spikerate
 config{1}.spike.resamplefs          = 1000;
-config{1}.spike.bltoi{1}            = [-5, -4];
+config{1}.spike.bltoi{1}            = [-2, -1];
+config{1}.spike.bltoi{1}            = [-2, -1];
+config{1}.spike.bltoi{1}            = [0, 1];
 
+config{1}.spike.ISIbins             = [0:0.005:0.150];
 
 
 % Rodent 2

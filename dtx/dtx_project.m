@@ -35,28 +35,11 @@ for ipatient = 1:6
     config = dtx_setparams([]);    
     
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers(config{ipatient}, false);
+    [MuseStruct_micro, MuseStruct_macro]    = readMuseMarkers_parts(config{ipatient}, false);
     
     % align Muse markers according to peaks and detect whether they contain artefacts
-    [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, false);   
+    [MuseStruct_micro, MuseStruct_macro]    = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, true);   
     [MuseStruct_micro, MuseStruct_macro]    = MuseMarkers_update_filepath(config{ipatient},MuseStruct_micro, MuseStruct_macro);
-    
-    if ipatient == 1
-        MuseStruct_micro = MuseStruct_micro(2:end);
-        MuseStruct_macro = MuseStruct_macro(2:end);
-    end
-    if ipatient == 2
-        MuseStruct_micro = MuseStruct_micro(3:end);
-        MuseStruct_macro = MuseStruct_macro(3:end);
-    end
-    if ipatient == 3 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
-        MuseStruct_micro = MuseStruct_micro(2:end);
-        MuseStruct_macro = MuseStruct_macro(2:end);
-    end  
-    if ipatient == 4 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
-        MuseStruct_micro = MuseStruct_micro(2:end);
-        MuseStruct_macro = MuseStruct_macro(2:end);
-    end
     
     % read LFP data
     [dat_micro, dat_macro] = readLFP(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
@@ -91,9 +74,24 @@ for ipatient = 1:6
     
     
     
-    
-    
-    
+%     
+%     
+%         if ipatient == 1
+%         MuseStruct_micro = MuseStruct_micro(2:end);
+%         MuseStruct_macro = MuseStruct_macro(2:end);
+%     end
+%     if ipatient == 2
+%         MuseStruct_micro = MuseStruct_micro(3:end);
+%         MuseStruct_macro = MuseStruct_macro(3:end);
+%     end
+%     if ipatient == 3 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
+%         MuseStruct_micro = MuseStruct_micro(2:end);
+%         MuseStruct_macro = MuseStruct_macro(2:end);
+%     end  
+%     if ipatient == 4 % SHOULD END EARLIER AS WELL< CHECK EXCELL FILE
+%         MuseStruct_micro = MuseStruct_micro(2:end);
+%         MuseStruct_macro = MuseStruct_macro(2:end);
+%     end
     
     
     
@@ -128,14 +126,14 @@ for ipatient = 1:6
     
     % write data concatinated for SC, and update config with sampleinfo;
     % reload, rewrite
-    config{ipatient} = writeSpykingCircus(config{ipatient}, MuseStruct_micro, true, false);
+    config{ipatient} = writeSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true, false);
     
     % create parameter and probe file for spyking circus
 %     writeSpykingCircusParameters(config{ipatient});
         
     % read raw spike data from SC, and segment into trials, requires 
 %     [SpikeRaw, SpikeTrials]                 = readSpykingCircus_phy(config{ipatient}, MuseStruct_micro, true);
-    [SpikeRaw, SpikeTrials]                 = readSpykingCircus(config{ipatient}, MuseStruct_micro, true);
+    [SpikeRaw, SpikeTrials]                 = readSpykingCircus_parts(config{ipatient}, MuseStruct_micro, false);
 
     
     ilabel = 1;

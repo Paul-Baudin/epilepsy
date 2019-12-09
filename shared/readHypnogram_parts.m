@@ -202,6 +202,12 @@ print(h, '-dpdf', fullfile(cfg.imagesavedir,[cfg.prefix,'IEDs_per_stage.pdf']),'
 % writetable(t,fullfile(config.imagesavedir,'seg_labels'));
 disp('Done');
 
+% write results to table
+
+%    stages.datenum = datenum(stages.clock);
+%    stages.datenum = stages.datenum - min(stages.datenum);
+%    filename = fullfile(config{ipatient}.datasavedir,'spikestages.csv');
+%    writetable(stages,filename)
 
 
 %%%%%

@@ -181,9 +181,9 @@ else
         
     end
     
-    %     save(fname,'SpikeRaw','SpikeTrials');
+        save(fname,'SpikeRaw','SpikeTrials');
     
-    save(fname,'SpikeRaw');
+%     save(fname,'SpikeRaw');
     
 end % save / force
 

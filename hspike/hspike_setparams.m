@@ -78,27 +78,23 @@ config{1}.hyp.imagesavedir          = fullfile(rootpath_analysis, 'images', 'hsp
 config{1}.hyp.backupdir             = fullfile(rootpath_analysis, 'markerbackup');
 config{1}.hyp.markerdir             = fullfile(rootpath_analysis, 'data',   'hspike');
 config{1}.hyp.micromedchannel       = 'F3p6';
-config{1}.hyp.contains              = {'NO_SCORE','AWAKE','PHASE_1','PHASE_2','PHASE_3','PHASE_4','REM'}; % in order of height in plot
+config{1}.hyp.contains              = {'NO_SCORE','AWAKE','PHASE_1','PHASE_2','PHASE_3','REM'}; % in order of height in plot
 config{1}.hyp.markers               = {'Hspike','BAD'};
 config{1}.hyp.markers               = {'Hspike'};
 config{1}.hyp.overwrite             = 'append'; % 'append' or 'overwrite'
-
 % config{1}.hyp.notcontains           = {"ADStartLoss","ADEndLoss","TTL","StartRecord","StopRecord","NLXEvent","BAD"};
 
+config{1}.align.name                = {'Hspike'};                                                                                    % pattern to identify channel on which to based peak detection                                                                        % peak threshold: fraction (0:inf) of mean peak amplitude in baseline period
 config{1}.align.channel             = {'_HaT2_1'};                                                                                    % pattern to identify channel on which to based peak detection                                                                        % peak threshold: fraction (0:inf) of mean peak amplitude in baseline period
-config{1}.align.flip                = {'no'};
 config{1}.align.abs                 = {'no'};
 config{1}.align.method              = {'max'};                                                              % whether to align to max, first-after-zero, or nearest-to-t-zero peak, maxabs {'max','first', 'nearest', 'maxabs'}
-config{1}.align.filter              = {'none'};
-config{1}.align.freq                = {[1, 40]};                                                                                  % lowpass filter freq to smooth peak detection (Hz)
+config{1}.align.filter              = {'bp'};
+config{1}.align.freq                = {[1, 20]};                                                                                  % lowpass filter freq to smooth peak detection (Hz)
 config{1}.align.hilbert             = {'no'};
 config{1}.align.thresh              = [0];
-config{1}.align.toiplot{1}          = [-0.5,  1];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
-config{1}.align.toiactive{1}        = [-0.06, 0.06];                                            % active period in which to search for peaks [ -0.1,  30;  0, 30;  -0.1, 0.1;0,  0.1];
-config{1}.align.toibaseline{1}      = [-0.2, -0.1];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
-
-config{1}.pattern.startmarker       = 'StartHypnogram';
-config{1}.pattern.endmarker         = 'EndHypnogram';
+config{1}.align.toiplot{1}          = [-0.3,  1.7];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
+config{1}.align.toiactive{1}        = [-0.1,  0.3];                                            % active period in which to search for peaks [ -0.1,  30;  0, 30;  -0.1, 0.1;0,  0.1];
+config{1}.align.toibaseline{1}      = [-0.3, -0.1];                                            % baseline period in which to search for peaks [ -1,  0; -1,  0;  -1,  -0.1;  -1, -0.1];
 
 config{1}.LFP.hpfilter              = 'no';
 config{1}.LFP.hpfreq                = 1;
@@ -107,7 +103,7 @@ config{1}.LFP.baseline              = 'yes';
 config{1}.LFP.baselinewindow{1}     = [-2, -1];
 config{1}.LFP.slidestep             = [0.01];
 
-config{1}.epoch.toi{1}              = [-2,  1];                                                                
+config{1}.epoch.toi{1}              = [-0.1  0.5];                                                                
 config{1}.epoch.pad                 = [0.5, 0.5, 0.5];
 
 config{1}.circus.channel            = {'mHaT2_1','mHaT2_3','mHaT2_4','mHaT2_6','mHaT2_8'};

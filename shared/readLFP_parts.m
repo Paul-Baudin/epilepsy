@@ -250,7 +250,7 @@ else
                                                             Stage(ievent) = 0;
                                                         case 'NO_SCORE'
                                                             fprintf('%d\n',0);
-                                                            Stage(ievent) = -1;
+                                                            Stage(ievent) = 0;
                                                         otherwise
                                                             error('Unexpected label name in Hypnogram\n');
                                                     end

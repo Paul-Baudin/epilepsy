@@ -30,7 +30,7 @@ else
     % ISI over 1-second windows
     cfgtemp                         = [];
     cfgtemp.outputunit              = 'proportion';
-    cfgtemp.bins                    = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
+    cfgtemp.bins                    = cfg.spike.ISIbins;   % use bins of 0.5 milliseconds
     cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
     stats.isi_1s                    = ft_spike_isi(cfgtemp,spiketrials_1s);
    
@@ -165,7 +165,7 @@ else
         
         cfgtemp                         = [];
         cfgtemp.outputunit              = 'proportion';
-        cfgtemp.bins                    = [0:0.0005:0.025];   % use bins of 0.5 milliseconds
+        cfgtemp.bins                    = cfg.spike.ISIbins;   % use bins of 0.5 milliseconds
         cfgtemp.param                   = 'coeffvar';       % compute the coefficient of variation (sd/mn of isis)
         stats.isi_pattern_all{ilabel}   = ft_spike_isi(cfgtemp,SpikeTrials{ilabel});
         
@@ -252,7 +252,7 @@ else
             cfgtemp.uvar                        = 2;
             cfgtemp.design(1,:)                 = [ones(1,size(sdf_orig.trial,1)) ones(1,size(sdf_orig.trial,1)) *2];
             cfgtemp.design(2,:)                 = [1 : size(sdf_orig.trial,1) 1 : size(sdf_orig.trial,1)];
-            cfgtemp.numrandomization            = 1000;
+            cfgtemp.numrandomization            = 100;
             cfgtemp.channel                     = itemp;
             stats.clusterstat{ilabel}{itemp}    = ft_timelockstatistics(cfgtemp,sdf_smooth,sdf_bl);
             
@@ -394,7 +394,7 @@ else
             cfgtemp.uvar                            = 2;
             cfgtemp.design(1,:)                     = [ones(1,size(sdf_bar.trial,1)) ones(1,size(sdf_bar.trial,1)) *2];
             cfgtemp.design(2,:)                     = [1 : size(sdf_bar.trial,1) 1 : size(sdf_bar.trial,1)];
-            cfgtemp.numrandomization                = 1000;
+            cfgtemp.numrandomization                = 100;
             cfgtemp.channel                         = 1;
             stats_bar.clusterstat{ilabel}{itemp}    = ft_timelockstatistics(cfgtemp,sdf_bar,sdf_bar_bl);
             
@@ -493,22 +493,29 @@ else
 %             legend({'1 sec all data','whole trial','baseline trial','active trial'});
 %             
             
-              barh = bar(stats.isi_1s.time*1000,stats.isi_pattern_all{ilabel}.avg(itemp,:));
+              barh = bar(stats.isi_pattern_all{ilabel}.time*1000,stats.isi_pattern_all{ilabel}.avg(itemp,:));
+              title('ISI pattern');
+                          xlabel('ISI (ms)');
+
+               subplot(3,3,6); hold;
+           
+              barh = bar(stats.isi_1s.time*1000,stats.isi_1s.avg(itemp,:));
+              title('ISI all data')
 %                         barh(1).FaceColor = [0 0 0];
 %             barh(2).FaceColor = [0 1 0];
 %             barh(3).FaceColor = [0 0 1];
 %             barh(4).FaceColor = [1 0 0];
 %             legend({'1 sec all data','whole trial','baseline trial','active trial'});
-            xticks(stats.isi_pattern_ac{ilabel}.time*1000);
-            xtickangle(90);
-            axis tight
-            grid on
-            set(gca,'fontsize',4);
-            ylabel('Count');
+%             xticks(stats.isi_pattern_ac{ilabel}.time*1000);
+%             xtickangle(90);
+%             axis tight
+%             grid on
+%             set(gca,'fontsize',4);
+%             ylabel('Count');
             xlabel('ISI (ms)');
             
             % peak width accoridng to Gast et. al
-            subplot(3,3,6); hold;
+            subplot(3,3,9); hold;
 %             temp        = dir(fullfile(cfg.datasavedir,[cfg.prefix,'all_data_',cfg.circus.channel{1}(1:end-2),'_*.ncs']));
 %             hdr_fname   = fullfile(temp(1).folder,temp(1).name);
 %             hdr         = ft_read_header(hdr_fname); % take the first file to extract the header of the data

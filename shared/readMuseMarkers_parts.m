@@ -190,12 +190,13 @@ for type = ["micro","macro"]
                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).clock(ievent)            = seconds(marks{imarker}(ievent,2)) + MuseStruct{ipart}{idir}.starttime;
                                 %                     MuseStruct{ipart}{idir}.markers.(name{imarker}).syncsample(ievent)       = MuseStruct{ipart}{idir}.markers.(name{imarker}).begsample + MuseStruct{ipart}{idir}.markers.(name{imarker}).offset;
                                 
-                                % event structure
-                                MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end+1).value      = [];
-                                MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).sample      = MuseStruct{ipart}{idir}.markers.(name{imarker}).begsample + MuseStruct{ipart}{idir}.markers.(name{imarker}).offset(ievent);
-                                MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).duration    = 0;
-                                MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).offset      = MuseStruct{ipart}{idir}.markers.(name{imarker}).offset(ievent);
-                                MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).time        = marks{imarker}(ievent,2);
+                                % event structure - MIGHT NEED TO REMOVE,
+                                % BUT BACKWARD COMPATIBILTY?
+%                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end+1).value      = [];
+%                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).sample      = MuseStruct{ipart}{idir}.markers.(name{imarker}).begsample + MuseStruct{ipart}{idir}.markers.(name{imarker}).offset(ievent);
+%                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).duration    = 0;
+%                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).offset      = MuseStruct{ipart}{idir}.markers.(name{imarker}).offset(ievent);
+%                                 MuseStruct{ipart}{idir}.markers.(name{imarker}).events(end ).time        = marks{imarker}(ievent,2);
                             end
                         end
                     else

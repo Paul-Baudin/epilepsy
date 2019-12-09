@@ -92,7 +92,7 @@ else
             temp                        = dir(fullfile(MuseStruct{ipart}{idir}.directory,['*',cfg.circus.channel{ichan},'.ncs']));
             hdrtemp                     = ft_read_header(fullfile(MuseStruct{ipart}{idir}.directory, temp.name));
             clear fname
-            fname                       = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'-multifile-',cfg.labels.micro{ichan},'.ncs']);
+            fname                       = fullfile(cfg.datasavedir,['Part', num2str(ipart)],[cfg.prefix,'multifile-',cfg.labels.micro{ichan},'.ncs']);
             
             % save filenames to cfg (output of function)
             cfg.fnames_ncs{ipart}{ichan} = fname;

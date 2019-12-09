@@ -36,15 +36,12 @@ for ipatient = 1
     [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, true);
     
     % update paths for different OS
-    [MuseStruct_micro, MuseStructf_macro] = MuseMarkers_update_filepath_parts(config{ipatient},MuseStruct_micro, MuseStruct_macro);
+    [MuseStruct_micro, MuseStruct_macro] = MuseMarkers_update_filepath_parts(config{ipatient},MuseStruct_micro, MuseStruct_macro);
 
-    % plot hypnogram (use readmusemarkers without parts before)
-    %     [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers(config{ipatient}, false);
-    %
-%     for ipart = 1 : 2
-%         figure;
-%         plotHypnogram(config{ipatient},MuseStruct_micro{ipart})
-%     end
+    % plot hypnogram
+    plotHypnogram(config{ipatient},MuseStruct_micro)
+
+    
     % align data
     
     % read LFP data

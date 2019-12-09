@@ -33,24 +33,19 @@ for ipatient = 1
 %     export_hypnogram(config{ipatient});
 
     % read muse markers
-    [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, false);
+    [MuseStruct_micro, MuseStruct_macro] = readMuseMarkers_parts(config{ipatient}, true);
+    
+    % align Muse markers according to peaks and detect whether they contain artefacts
+    [MuseStruct_micro, MuseStruct_macro] = alignMuseMarkers(config{ipatient},MuseStruct_micro, MuseStruct_macro, true);
     
     % update paths for different OS
-    [MuseStruct_micro, MuseStruct_macro] = MuseMarkers_update_filepath_parts(config{ipatient},MuseStruct_micro, MuseStruct_macro);
+%     [MuseStruct_micro, MuseStruct_macro] = MuseMarkers_update_filepath_parts(config{ipatient},MuseStruct_micro, MuseStruct_macro);
 
     % plot hypnogram (use readmusemarkers without parts before)
-    for ipart = 1 : 3
-        config{ipatient}.prefix = ['P', num2str(ipatient), '-p', num2str(ipart),'-'];
-        plotHypnogram(config{ipatient},MuseStruct_micro{ipart})
-    end
+    plotHypnogram(config{ipatient},MuseStruct_micro)
     
     % plot analysis of events vs. hypnogram
     [stages,hyp]  = readHypnogram_parts(config{ipatient}, MuseStruct_micro, MuseStruct_macro);
-    
-%    stages.datenum = datenum(stages.clock);
-%    stages.datenum = stages.datenum - min(stages.datenum);
-%    filename = fullfile(config{ipatient}.datasavedir,'spikestages.csv');
-%    writetable(stages,filename)
 
     % write data concatinated for SC, and update config with sampleinfo
     config{ipatient} = writeSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true, true);
@@ -62,11 +57,12 @@ for ipatient = 1
     [SpikeRaw, SpikeTrials] = readSpykingCircus_parts(config{ipatient}, MuseStruct_micro, true);
         
     % read LFP data
-    [dat_micro, dat_macro] = readLFP_parts(config{ipatient}, MuseStruct_micro, MuseStruct_macro, true, true);
+    [dat_micro, dat_macro] = readLFP_parts(config{ipatient}, MuseStruct_micro, MuseStruct_macro, false, false);
     
+    ilabel = 1;
     % append nights
-    dat_micro_append = ft_appenddata([],dat_micro{1}{1},dat_micro{2}{1},dat_micro{3}{1});
-    dat_macro_append = ft_appenddata([],dat_macro{1}{1},dat_macro{2}{1},dat_macro{3}{1});
+    dat_micro_append = ft_appenddata([],dat_micro{1}{ilabel},dat_micro{2}{ilabel},dat_micro{3}{ilabel});
+    dat_macro_append = ft_appenddata([],dat_macro{1}{ilabel},dat_macro{2}{ilabel},dat_macro{3}{ilabel});
 
     % average
     dat_micro_avg = ft_timelockanalysis([],dat_micro_append);
@@ -78,12 +74,13 @@ for ipatient = 1
     subplot(2,1,1); hold;
     plot(dat_macro_avg.time, dat_macro_avg.avg')
     y = ylim;
-    plot([0 0],[y(1), y(2)],':');
+    plot([0 0],[y(1), y(2)],'k:');
     
     subplot(2,1,2); hold;
     plot(dat_micro_avg.time, dat_micro_avg.avg')
     y = ylim;
-    plot([0 0],[y(1), y(2)],':');
+    plot([0 0],[y(1), y(2)],'k:');
+    
     % print ISI to file
     fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
     set(fig,'PaperOrientation','landscape');
@@ -108,35 +105,19 @@ for ipatient = 1
     % plot TFR
      
     fig = figure;
-    subplot(2,1,1);
     cfgtemp               = [];
-    cfgtemp.channel         = ichannel;
-    cfgtemp.baseline        = [-4, -2];
-    cfgtemp.baselinetype    = 'relchange';
+    cfgtemp.channel         = 'all';
+    cfgtemp.baseline        = [-2, -1];
+%     cfgtemp.baselinetype    = 'relchange';
     cfgtemp.colorbar        = 'no';
     cfgtemp.colorbar        = 'yes';
     cfgtemp.zlim            = 'maxabs';
-    cfgtemp.xlim            = [-5 30];
-    cfgtemp.title           = 'Relative change from Baseline';
+%     cfgtemp.xlim            = config{ipatient}.;
+%     cfgtemp.title           = 'Relative change from Baseline';
     cfgtemp.parameter       = 'powspctrm';
     cfgtemp.colormap        = parula(5000);
     cfgtemp.renderer        = 'painters';
-    ft_singleplotTFR(cfgtemp,TFR{imarker} );
-    
-    subplot(2,1,2);
-    cfgtemp               = [];
-    cfgtemp.channel         = ichannel;
-    cfgtemp.baseline        = [-4, -2];
-    cfgtemp.baselinetype    = 'relchange';
-    cfgtemp.colorbar        = 'no';
-    cfgtemp.colorbar        = 'yes';
-    cfgtemp.zlim            = 'maxabs';
-    cfgtemp.xlim            = [-5 30];
-    cfgtemp.title           = 'Relative change (log power) from Baseline';
-    cfgtemp.parameter       = 'powspctrm';
-    cfgtemp.colormap        = parula(5000);
-    cfgtemp.renderer        = 'painters';
-    ft_singleplotTFR(cfgtemp,TFR_log{imarker} );
+    ft_singleplotTFR(cfgtemp,TFR_micro);
     
     % print ISI to file
     fig.Renderer = 'Painters'; % Else pdf is saved to bitmap
@@ -156,54 +137,30 @@ end
 
 
     
-    % align data
-    
-    figure;
-    ilabel                  = 1;
-    cfgtemp                 = [];
-    cfgtemp.spikechannel    = 1;
-    cfgtemp.latency         = [config{ipatient}.epoch.toi{ilabel}(1), config{ipatient}.epoch.toi{ilabel}(2)];
-    cfgtemp.trialborders    = 'yes';
-    ft_spike_plot_raster(cfgtemp,SpikeTrials{ilabel});
-    
-    % read and plot spikerate overview, and get the stats
-    [SpikeRateStats{ipatient}, stats_bar{ipatient}, sdf_orig_out{ipatient}, sdf_bar_out] = spikeratestats(config{ipatient}, SpikeRaw, SpikeTrials, true, 1);
-    
-    % read and plot LFP of spike events
-    [spike_LFP]  = spikeLFP(config{ipatient},SpikeRaw, false);
-    
-    
-end
-
-    
+%     dat_macro_append.trialinfo(dat_macro_append.trialinfo(:,4) == -1,4) = 0;
     
     figure; hold;
-    
-    for i = unique(dat_macro{1}.trialinfo(:,4))'
-        subplot(2,6,i+2);
+    for i = unique(dat_macro_append.trialinfo(:,4))'
+        subplot(2,5,i+1);
         cfg = [];
-        cfg.trials = find(dat_macro{1}.trialinfo(:,4) == i);
-        %         LFPmacro{i+2} = ft_timelockanalysis(cfg,dat_macro{1});
-        ft_singleplotER(cfg,dat_macro{1});
+        cfg.trials = find(dat_macro_append.trialinfo(:,4) == i);
+        ft_singleplotER(cfg,dat_macro_append);
         
-        subplot(2,6,i+2+6); hold;
-        for ii = 1 : size(dat_macro{1}.trialinfo,1)
-            if dat_macro{1}.trialinfo(ii,4) == i
-                plot(dat_macro{1}.trial{ii});
-            end
-        end
+%         subplot(2,5,i+1+6); hold;
+%         for ii = 1 : size(dat_macro_append.trialinfo,1)
+%             if dat_macro_append.trialinfo(ii,4) == i
+%                 plot(dat_macro_append.trial{ii});
+%             end
+%         end
     end
     
     % put all in none matrix
-    dat = zeros(size(dat_macro{1}.trial,2),size(dat_macro{1}.trial{1},2));
-    for i = 1 : size(dat_macro{1}.trial,2)
-        dat(i,:) = dat_macro{1}.trial{i};
-        cls(i) = dat_macro{1}.trialinfo(i,4);
+    dat = zeros(size(dat_macro_append.trial,2),size(dat_macro_append.trial{1},2));
+    for i = 1 : size(dat_macro_append.trial,2)
+        dat(i,:) = dat_macro_append.trial{i}(1,:);
+        cls(i) = dat_macro_append.trialinfo(i,4);
     end
-    
-    % simplify
-    cls(cls==-1) = 0;
-    
+        
     % combine for classifier
     d = [dat, cls'];
     
@@ -213,8 +170,6 @@ end
     for i = 1 : size(dat,1)
         cls_dummy(i,cls(i)+1) = 1;
     end
-    
-    
     
     % cluster pattern
     findPattern(config{ipatient}, dat_micro, dat_macro, force)
